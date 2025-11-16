@@ -1,10 +1,32 @@
+// server.js
+require('dotenv').config();          // Load environment variables
 const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes'); // Auth routes
+const adminRoutes = require('./routes/adminRoutes'); // Optional admin routes
+const focusAreaRoutes = require("./routes/focusAreaRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+
 const app = express();
 
+// Middleware
+app.use(cors());                     // Enable Cross-Origin requests
+app.use(express.json());             // Parse JSON request bodies
+
+// Root endpoint to check server status
 app.get('/', (req, res) => {
-  res.send('Server is running');
+  res.send({ message: 'Server is running' });
 });
 
-app.listen(3000, () => {
-  console.log('Server started on port 3000');
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes); // Optional, if you have admin routes
+app.use("/api/focus-areas", focusAreaRoutes);
+app.use("/api/reports", reportRoutes);
+
+
+// Start server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

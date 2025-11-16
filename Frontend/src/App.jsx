@@ -1,34 +1,37 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+
+import Test_Login from "./Test/login/Login"
+import OMA_Dashboard from "./Test/dashboard/oma-dashboard";
+import NPC_Dashboard from "./Test/dashboard/npc-dashboard";
+import AdminDashboard from "./Test/dashboard/admin-dashboard"; 
+import AddUserReport from "./Test/pages/AddUserReport"; 
+import AddUser from "./Test/pages/AddUser";
+import RoleRoute from "./Test/components/RoleRoute";
+
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+  <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Test_Login />} />
+        <Route path="/oma-dashboard" element={<OMA_Dashboard />} />
+        <Route path="/npc-dashboard" element={<NPC_Dashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/addUser" element={<AddUser />} />
+        <Route
+          path="/addUserReport"
+          element={
+            <RoleRoute allowedRoles={["Admin", "OMA"]}>  
+            {/* frontend this ensures only Admin and OMA can access that page. */}
+              <AddUserReport />
+            </RoleRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
