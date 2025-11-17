@@ -24,27 +24,27 @@ export default function AddUser() {
   /* -----------------------------------------------------------
       Fetch Focus Areas Dynamically
   ------------------------------------------------------------*/
-  useEffect(() => {
-    if (form.role_id === "3" && form.organisation_id) {
-      fetch(`http://localhost:4000/api/focus-areas`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          const filtered = data.focusAreas.filter(
-            fa => fa.organisation_id === parseInt(form.organisation_id)
-          );
-          setFocusAreas(filtered);
-        })
-        .catch(err => {
-          console.error(err);
-          setFocusAreas([]);
-        });
-    } else {
-      setFocusAreas([]);
-      setForm(prev => ({ ...prev, focus_area_id: "" }));
-    }
-  }, [form.role_id, form.organisation_id, token]);
+  // useEffect(() => {
+  //   if (form.role_id === "3" && form.organisation_id) {
+  //     fetch(`http://localhost:4000/api/focus-areas`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     })
+  //       .then(res => res.json())
+  //       .then(data => {
+  //         const filtered = data.focusAreas.filter(
+  //           fa => fa.organisation_id === parseInt(form.organisation_id)
+  //         );
+  //         setFocusAreas(filtered);
+  //       })
+  //       .catch(err => {
+  //         console.error(err);
+  //         setFocusAreas([]);
+  //       });
+  //   } else {
+  //     setFocusAreas([]);
+  //     setForm(prev => ({ ...prev, focus_area_id: "" }));
+  //   }
+  // }, [form.role_id, form.organisation_id, token]);
 
   /* -----------------------------------------------------------
       Generate Password
@@ -72,7 +72,7 @@ export default function AddUser() {
     };
 
     // Validations
-    if (payload.role_id === 3 && (!payload.organisation_id || !payload.focus_area_id)) {
+    if (payload.role_id === 3 && !payload.organisation_id ) {
       setMessage("Organisation and Focus Area are required for OMA role");
       return;
     }

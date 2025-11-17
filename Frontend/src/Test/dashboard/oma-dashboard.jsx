@@ -1,5 +1,6 @@
 // OMA_Dashboard.jsx
 import React, { useState } from "react";
+import { Link } from 'react-router-dom';
 
 export default function OMA_Dashboard() {
   const [activePage, setActivePage] = useState("planning"); 
@@ -109,6 +110,11 @@ export default function OMA_Dashboard() {
             </div>
           </>
         )}
+
+        <div>
+          <h1>OMA Dashboard — Ministry Workspace</h1>
+          <Link to="/test-form">Go to Test Form</Link>
+        </div>
 
         {activePage === "execution" && (
           <>

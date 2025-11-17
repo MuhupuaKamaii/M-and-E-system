@@ -32,15 +32,20 @@ router.post("/create-user", async (req, res) => {
         password_hash,
         role_id,
         organisation_id: role_id === 3 ? organisation_id : null,
-        focus_area_id: null     // <<< always null!
-      }]);
+        focus_area_id: null  // ✅ Always null for now
+      }])
+      .select(); // ✅ Added .select() to return the created user
 
-    if (error) return res.status(400).json({ message: error.message });
+    if (error) {
+      console.error("Supabase error:", error);
+      return res.status(400).json({ message: error.message });
+    }
 
     res.json({
       message: "User created successfully",
       plain_password: password,
-      user: data[0]
+      user: data ? data[0] : null
+      //user: data[0]
     });
 
   } catch (err) {
@@ -48,6 +53,5 @@ router.post("/create-user", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;
