@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HomePage from "./Test/pages/HomePage";
 
 import Test_Login from "./Test/login/Login";
 import OMA_Dashboard from "./Test/dashboard/oma-dashboard";
@@ -13,45 +14,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        <Route path="/" element={<Test_Login />} />
-
-        <Route 
-          path="/admin-dashboard" 
-          element={
-            <RoleRoute allowedRoles={["ADMIN"]}>
-              <AdminDashboard />
-            </RoleRoute>
-          }
-        />
-
-        <Route 
-          path="/oma-dashboard" 
-          element={
-            <RoleRoute allowedRoles={["OMA"]}>
-              <OMA_Dashboard />
-            </RoleRoute>
-          }
-        />
-
-        <Route 
-          path="/npc-dashboard" 
-          element={
-            <RoleRoute allowedRoles={["NPC"]}>
-              <NPC_Dashboard />
-            </RoleRoute>
-          }
-        />
-
-        <Route 
-          path="/addUser" 
-          element={
-            <RoleRoute allowedRoles={["ADMIN"]}>
-              <AddUser />
-            </RoleRoute>
-          }
-        />
-
+        <Route path="/" element={<HomePage />} />
+        <Route path="/Login" element={<Test_Login />} />
+        <Route path="/oma-dashboard" element={<OMA_Dashboard />} />
+        <Route path="/npc-dashboard" element={<NPC_Dashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/addUser" element={<AddUser />} />
         <Route
           path="/addUserReport"
           element={
