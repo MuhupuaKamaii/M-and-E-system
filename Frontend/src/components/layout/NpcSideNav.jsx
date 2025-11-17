@@ -1,9 +1,11 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   HiOutlineHomeModern,
   HiOutlineSquares2X2,
   HiOutlineClipboardDocumentList,
+  HiOutlineClipboardDocumentCheck,
   HiOutlineChartPie,
-  HiOutlineCog6Tooth,
 } from "react-icons/hi2";
 import NpcReviewerCard from "../profile/NpcReviewerCard";
 import NpcApprovalSpotlight from "../common/NpcApprovalSpotlight";
@@ -16,6 +18,19 @@ const navItems = [
 ];
 
 export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 }) {
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const reviewLinks = [
+    { label: "Planning", stage: "planning" },
+    { label: "Review", stage: "review" },
+    { label: "Closure", stage: "closure" },
+  ];
+
+  const handleReviewNavigate = (stage) => {
+    navigate(`/npc-dashboard?stage=${stage}`);
+  };
+
   return (
     <aside className="npc-sidenav">
       <div>
@@ -31,6 +46,25 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
               <span>{label}</span>
             </button>
           ))}
+          <div className="npc-sidenav__review">
+            <button
+              className={`npc-sidenav__item npc-sidenav__item--review ${isReviewOpen ? "is-open" : ""}`}
+              type="button"
+              onClick={() => setIsReviewOpen((prev) => !prev)}
+            >
+              <HiOutlineClipboardDocumentCheck size={20} />
+              <span>Review Queue</span>
+            </button>
+            {isReviewOpen && (
+              <div className="npc-sidenav__submenu">
+                {reviewLinks.map((link) => (
+                  <button key={link.stage} type="button" onClick={() => handleReviewNavigate(link.stage)}>
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <NpcReviewerCard />

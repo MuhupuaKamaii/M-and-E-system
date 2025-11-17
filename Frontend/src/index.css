@@ -140,7 +140,7 @@ img {
   padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 1.5rem;
   min-height: calc(100vh - 72px);
 }
 
@@ -181,6 +181,33 @@ img {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+.npc-sidenav__review {
+  display: flex;
+  flex-direction: column;
+}
+
+.npc-sidenav__item--review.is-open {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.npc-sidenav__submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.4rem 0 0 2.2rem;
+}
+
+.npc-sidenav__submenu button {
+  text-align: left;
+  padding: 0.3rem 0.4rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #f4f8ff;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .npc-sidenav__item {
@@ -441,38 +468,6 @@ img {
   color: var(--brand-navy);
 }
 
-.npc-report-filters {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.npc-review-summary {
-  margin: 0 0 0.75rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.npc-review-summary strong {
-  color: var(--brand-navy);
-}
-
-.npc-report-filters button {
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--muted);
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-}
-
-.npc-report-filters button.is-active {
-  background: var(--brand-navy);
-  color: #fff;
-  border-color: var(--brand-navy);
-}
-
 .npc-approval {
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -607,7 +602,7 @@ img {
 }
 
 .npc-reviewer {
-  margin-top: 2rem;
+  margin-top: 0.5rem;
   padding: 1rem;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);

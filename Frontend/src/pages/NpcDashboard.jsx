@@ -3,9 +3,7 @@ import NpcTopNav from "../components/layout/NpcTopNav";
 import NpcSideNav from "../components/layout/NpcSideNav";
 import StatCard from "../components/common/StatCard";
 import ProgressCard from "../components/common/ProgressCard";
-import ReportsTable from "../components/common/ReportsTable";
 import ActivityTimeline from "../components/common/ActivityTimeline";
-import WorkflowStageCard from "../components/common/WorkflowStageCard";
 import NpcApprovalSpotlight from "../components/common/NpcApprovalSpotlight";
 
 const programmeProgress = [
@@ -132,18 +130,9 @@ const initialTimeline = [
   },
 ];
 
-const variantByStatus = {
-  Submitted: "submitted",
-  Pending: "pending",
-  Approved: "approved",
-  Rejected: "rejected",
-  Closed: "closed",
-};
-
 export default function NpcDashboard() {
-  const [reports, setReports] = useState(initialReports);
-  const [activityItems, setActivityItems] = useState(initialTimeline);
-  const [reportFilter, setReportFilter] = useState("pending");
+  const [reports] = useState(initialReports);
+  const [activityItems] = useState(initialTimeline);
 
   const pendingCount = useMemo(
     () => reports.filter((report) => ["Submitted", "Pending"].includes(report.status)).length,
@@ -185,172 +174,6 @@ export default function NpcDashboard() {
     [totalReports, pendingCount, flaggedCount],
   );
 
-  const workflowStages = useMemo(() => {
-    const phaseCounts = reports.reduce(
-      (acc, report) => {
-        acc[report.phase] = (acc[report.phase] || 0) + 1;
-        return acc;
-      },
-      { planning: 0, execution: 0, closure: 0 },
-    );
-
-    return [
-      {
-        stageKey: "planning",
-        title: "Planning phase",
-        description: "OMAs align indicators & budgets",
-        stats: [
-          { label: "Awaiting NPC", value: phaseCounts.planning?.toString() ?? "0" },
-          { label: "Returned", value: flaggedCount.toString() },
-        ],
-        statusText: phaseCounts.planning ? "NPC review in progress" : "Backlog clear",
-        statusTone: phaseCounts.planning ? "neutral" : "approved",
-      },
-      {
-        stageKey: "execution",
-        title: "Execution phase",
-        description: "Projects currently live",
-        stats: [
-          { label: "In progress", value: phaseCounts.execution?.toString() ?? "0" },
-          {
-            label: "With issues",
-            value: Math.max(phaseCounts.execution - approvedCount, 0).toString(),
-          },
-        ],
-        statusText: "On schedule",
-        statusTone: "approved",
-      },
-      {
-        stageKey: "closure",
-        title: "Closure & evaluation",
-        description: "NPC verifies deliverables",
-        stats: [
-          { label: "Closed", value: phaseCounts.closure?.toString() ?? "0" },
-          { label: "Pending audits", value: Math.max(phaseCounts.closure - 1, 0).toString() },
-        ],
-        statusText: phaseCounts.closure ? "Awaiting evidence" : "Upcoming",
-        statusTone: "neutral",
-      },
-    ];
-  }, [reports, flaggedCount, approvedCount]);
-
-  const filteredReports = useMemo(() => {
-    if (reportFilter === "approved") {
-      return reports.filter((report) => report.status === "Approved");
-    }
-    if (reportFilter === "pending") {
-      return reports.filter((report) => ["Submitted", "Pending", "Rejected"].includes(report.status));
-    }
-    return reports;
-  }, [reports, reportFilter]);
-
-  const addTimelineEntry = (title, oma, status) => {
-    setActivityItems((prev) => [
-      {
-        id: `${Date.now()}`,
-        title,
-        oma,
-        timeAgo: "just now",
-        status,
-      },
-      ...prev,
-    ]);
-  };
-
-  const updateReport = (reportId, updates) => {
-    setReports((prev) =>
-      prev.map((report) => (report.id === reportId ? { ...report, ...updates } : report)),
-    );
-  };
-
-  const handleApprove = (report) => {
-    updateReport(report.id, {
-      status: "Approved",
-      statusVariant: variantByStatus.Approved,
-      phase: "execution",
-    });
-    addTimelineEntry(`NPC approved ${report.programme}`, report.owner, "Approved");
-  };
-
-  const handleReject = (report) => {
-    updateReport(report.id, {
-      status: "Rejected",
-      statusVariant: variantByStatus.Rejected,
-      phase: "planning",
-    });
-    addTimelineEntry(`NPC rejected ${report.programme}`, report.owner, "Rework");
-  };
-
-  const handleClose = (report) => {
-    updateReport(report.id, {
-      status: "Closed",
-      statusVariant: variantByStatus.Closed,
-      phase: "closure",
-    });
-    addTimelineEntry(`${report.programme} moved to closure`, report.owner, "Closed");
-  };
-
-  const renderActions = (report) => {
-    const buttons = [];
-    if (["Submitted", "Pending", "Rejected"].includes(report.status)) {
-      buttons.push(
-        <button
-          key={`${report.id}-approve`}
-          type="button"
-          className="primary"
-          onClick={() => handleApprove(report)}
-        >
-          Approve
-        </button>,
-      );
-    }
-    if (["Submitted", "Pending"].includes(report.status)) {
-      buttons.push(
-        <button
-          key={`${report.id}-reject`}
-          type="button"
-          className="danger"
-          onClick={() => handleReject(report)}
-        >
-          Reject
-        </button>,
-      );
-    }
-    if (report.phase === "execution" && report.status === "Approved") {
-      buttons.push(
-        <button
-          key={`${report.id}-close`}
-          type="button"
-          className="success"
-          onClick={() => handleClose(report)}
-        >
-          Close
-        </button>,
-      );
-    }
-
-    return buttons;
-  };
-
-  const reportFilters = (
-    <div className="npc-report-filters">
-      {[
-        { label: "Pending review", value: "pending" },
-        { label: "Approved", value: "approved" },
-        { label: "All", value: "all" },
-      ].map((filter) => (
-        <button
-          key={filter.value}
-          type="button"
-          className={reportFilter === filter.value ? "is-active" : ""}
-          onClick={() => setReportFilter(filter.value)}
-        >
-          {filter.label}
-        </button>
-      ))}
-    </div>
-  );
-
   return (
     <div className="npc-dashboard">
       <NpcTopNav />
@@ -374,25 +197,6 @@ export default function NpcDashboard() {
                 <StatCard key={stat.label} {...stat} />
               ))}
             </div>
-          </section>
-
-          <section className="npc-section">
-            <div className="npc-section__head">
-              <div>
-                <p className="npc-section__eyebrow">Review queue</p>
-                <h2 className="npc-section__title">Submissions waiting for action</h2>
-              </div>
-            </div>
-            <p className="npc-review-summary">
-              <strong>{pendingCount}</strong> awaiting decision • <strong>{approvedCount}</strong> approved •{" "}
-              <strong>{flaggedCount}</strong> flagged • <strong>{totalReports}</strong> total in cycle
-            </p>
-            <ReportsTable
-              reports={filteredReports}
-              renderActions={renderActions}
-              filters={reportFilters}
-              title="Live submissions"
-            />
           </section>
 
           <section className="npc-section npc-section--split">
