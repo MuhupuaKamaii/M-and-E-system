@@ -32,6 +32,22 @@
 6. git push origin main
     - Push Your Changes
 
+## How to push everything expect App.jsx
+1. Add all files except App.jsx
+    - git add . ':!Frontend/src/App.jsx'
+    - ':!' tells Git to exclude that file.
+
+2. Check what will be committed
+    - git status
+
+3. Commit
+    - git commit -m "Your message"
+
+
+4. Push
+    - git push
+
+
 # Frontend
 
 ## module that you need to install
