@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import FocusAreaDropdown from "../components/FocusAreaDropdown"; 
 
 export default function AddUserReport() {
   const [focusAreas, setFocusAreas] = useState([]);
@@ -60,7 +61,7 @@ export default function AddUserReport() {
 
     const fetchDetails = async () => {
       try {
-        const res = await fetch(`/api/focus-areas/${selectedFocusArea}`, {
+        const res = await fetch(`/api/focus-areas/${selectedFocusArea}/details`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -103,7 +104,7 @@ export default function AddUserReport() {
       const data = await res.json();
       if (!res.ok) return setMessage(data.message || "Error submitting report");
 
-      setMessage(" Report created successfully!");
+      setMessage("Report created successfully!");
       setReportData({ programme_id: "", strategies: [], description: "", target: "", comments: "" });
       setSelectedFocusArea("");
       setDetails({});
@@ -119,18 +120,13 @@ export default function AddUserReport() {
       {message && <p style={{ color: "green" }}>{message}</p>}
 
       <form onSubmit={handleSubmit}>
-        {/* SELECT FOCUS AREA */}
+        {/* FOCUS AREA DROPDOWN */}
         <label><strong>Select Focus Area:</strong></label>
-        <select
-          value={selectedFocusArea}
-          onChange={(e) => setSelectedFocusArea(e.target.value)}
-          required
-        >
-          <option value="">-- Select --</option>
-          {focusAreas.map((fa) => (
-            <option key={fa.id} value={fa.id}>{fa.name}</option>
-          ))}
-        </select>
+        <FocusAreaDropdown
+          focusAreas={focusAreas}
+          selectedFocusArea={selectedFocusArea}
+          setSelectedFocusArea={setSelectedFocusArea}
+        />
 
         <br /><br />
 
@@ -155,14 +151,12 @@ export default function AddUserReport() {
                 value={reportData.programme_id}
                 onChange={(e) => {
                   const selectedProgrammeId = e.target.value;
-                  const programme = details.programmes.find(
-                    (p) => p.id.toString() === selectedProgrammeId
-                  );
+                  const programme = details.programmes.find((p) => p.id.toString() === selectedProgrammeId);
 
                   setReportData((prev) => ({
                     ...prev,
                     programme_id: selectedProgrammeId,
-                    strategies: [], // Reset strategies
+                    strategies: [],
                   }));
 
                   // Optional: preload strategies if needed

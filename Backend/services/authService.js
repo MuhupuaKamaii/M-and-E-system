@@ -15,20 +15,21 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
  */
 async function login(username, password) {
   // Fetch user from Supabase, including role info
-  const { data: user, error } = await supabase
-    .from('users')
-    .select(`
-      user_id,
-      full_name,
-      username,
-      password_hash,
-      role_id,
-      roles(role_name),
-      organisation_id,
-      focus_area_id
-    `)
-    .eq('username', username)
-    .single();
+const { data: user, error } = await supabase
+  .from("users")
+  .select(`
+    user_id,
+    full_name,
+    username,
+    password_hash,
+    organisation_id,
+    focus_area_id,
+    role_id,
+    roles(role_name)
+  `)
+  .eq("username", username)
+  .single();
+
 
   if (error || !user) {
     throw new Error('User not found');
@@ -53,7 +54,7 @@ async function login(username, password) {
 
   // Return user data + token
   return {
-    userId: user.user_id,
+    user_id: user.user_id,
     fullName: user.full_name,
     role: user.roles.role_name,
     organisationId: user.organisation_id,
@@ -63,3 +64,5 @@ async function login(username, password) {
 }
 
 module.exports = { login };
+
+
