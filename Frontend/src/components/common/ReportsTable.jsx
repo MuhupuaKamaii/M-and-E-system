@@ -1,17 +1,25 @@
 import { HiOutlineArrowTopRightOnSquare } from "react-icons/hi2";
 
-export default function ReportsTable({ reports = [] }) {
+export default function ReportsTable({
+  reports = [],
+  renderActions,
+  title = "Submitted reports",
+  filters,
+}) {
   return (
     <div className="npc-card">
       <div className="npc-card__head">
         <div>
-          <p className="npc-card__title">Submitted reports</p>
+          <p className="npc-card__title">{title}</p>
           <p className="npc-card__subtitle">Live queue from all OMAs</p>
         </div>
-        <button className="npc-link-button" type="button">
-          View all
-          <HiOutlineArrowTopRightOnSquare size={16} />
-        </button>
+        <div className="npc-card__controls">
+          {filters}
+          <button className="npc-link-button" type="button">
+            View all
+            <HiOutlineArrowTopRightOnSquare size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="npc-table__wrap">
@@ -23,6 +31,7 @@ export default function ReportsTable({ reports = [] }) {
               <th>Submitted</th>
               <th>Status</th>
               <th>Confidence</th>
+              {renderActions && <th>Action</th>}
             </tr>
           </thead>
           <tbody>
@@ -40,6 +49,11 @@ export default function ReportsTable({ reports = [] }) {
                   </span>
                 </td>
                 <td>{report.confidence}</td>
+                {renderActions && (
+                  <td>
+                    <div className="npc-action-buttons">{renderActions(report)}</div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

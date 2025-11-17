@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 
 export default function OMA_Dashboard() {
-  const [activePage, setActivePage] = useState("planning"); // Planning is default
+  const [activePage, setActivePage] = useState("planning"); 
   const [formData, setFormData] = useState({
     project_name: "",
     description: "",

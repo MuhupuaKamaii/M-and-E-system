@@ -1,12 +1,6 @@
-import { HiOutlineBellAlert, HiOutlineEnvelope, HiOutlineUserCircle, HiOutlineArrowRight, HiOutlineMagnifyingGlass } from "react-icons/hi2";
+import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
 
-const quickLinks = [
-  { label: "Opportunities", href: "#" },
-  { label: "Public Policies", href: "#" },
-  { label: "Publications", href: "#" },
-];
-
-export default function NpcTopNav({ userName = "NPC Reviewer" }) {
+export default function NpcTopNav() {
   return (
     <header className="npc-nav">
       <div className="npc-nav__brand">
@@ -21,36 +15,15 @@ export default function NpcTopNav({ userName = "NPC Reviewer" }) {
         </div>
       </div>
 
-      <div className="npc-nav__search">
-        <HiOutlineMagnifyingGlass size={18} />
-        <input type="search" placeholder="Search programmes, reports, OMAs..." />
-      </div>
-
-      <div className="npc-nav__links">
-        {quickLinks.map((link) => (
-          <a key={link.label} href={link.href}>
-            {link.label}
-          </a>
-        ))}
-      </div>
-
-      <div className="npc-nav__actions">
-        <button aria-label="Notifications" className="npc-icon-button">
-          <HiOutlineBellAlert size={20} />
-          <span className="npc-indicator">3</span>
-        </button>
-        <button aria-label="Messages" className="npc-icon-button">
-          <HiOutlineEnvelope size={20} />
-        </button>
-        <div className="npc-profile">
-          <HiOutlineUserCircle size={28} />
-          <div>
-            <p className="npc-profile__name">{userName}</p>
-            <button className="npc-profile__cta">
-              View profile <HiOutlineArrowRight size={14} />
-            </button>
-          </div>
+      <div className="npc-nav__controls">
+        <div className="npc-nav__search">
+          <HiOutlineMagnifyingGlass size={18} />
+          <input type="search" placeholder="Search programmes, reports, OMAs..." />
         </div>
+
+        <button className="npc-nav__admin" type="button">
+          Admin settings
+        </button>
       </div>
     </header>
   );

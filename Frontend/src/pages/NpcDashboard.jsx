@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import NpcTopNav from "../components/layout/NpcTopNav";
 import NpcSideNav from "../components/layout/NpcSideNav";
 import StatCard from "../components/common/StatCard";
@@ -5,36 +6,7 @@ import ProgressCard from "../components/common/ProgressCard";
 import ReportsTable from "../components/common/ReportsTable";
 import ActivityTimeline from "../components/common/ActivityTimeline";
 import WorkflowStageCard from "../components/common/WorkflowStageCard";
-
-const statBlocks = [
-  {
-    label: "Total reports in cycle",
-    value: "128",
-    subtext: "All pillars • FY 2025/26",
-    trend: { direction: "up", value: "+12%" },
-  },
-  {
-    label: "Pending NPC review",
-    value: "18",
-    subtext: "Need action",
-    trend: { direction: "down", value: "-4%" },
-    tone: "warning",
-  },
-  {
-    label: "Approved this week",
-    value: "26",
-    subtext: "Avg approval time 2.1 days",
-    trend: { direction: "up", value: "+8%" },
-    tone: "success",
-  },
-  {
-    label: "Flagged for follow-up",
-    value: "6",
-    subtext: "Escalated to sector leads",
-    trend: { direction: "up", value: "+2" },
-    tone: "alert",
-  },
-];
+import NpcApprovalSpotlight from "../components/common/NpcApprovalSpotlight";
 
 const programmeProgress = [
   {
@@ -60,7 +32,7 @@ const programmeProgress = [
   },
 ];
 
-const reports = [
+const initialReports = [
   {
     id: "r1",
     programme: "Agriculture Value Chains",
@@ -70,6 +42,7 @@ const reports = [
     status: "Submitted",
     statusVariant: "submitted",
     confidence: "High",
+    phase: "review",
   },
   {
     id: "r2",
@@ -80,6 +53,7 @@ const reports = [
     status: "Approved",
     statusVariant: "approved",
     confidence: "Medium",
+    phase: "execution",
   },
   {
     id: "r3",
@@ -90,6 +64,7 @@ const reports = [
     status: "Pending",
     statusVariant: "pending",
     confidence: "Low",
+    phase: "review",
   },
   {
     id: "r4",
@@ -100,10 +75,33 @@ const reports = [
     status: "Submitted",
     statusVariant: "submitted",
     confidence: "Medium",
+    phase: "planning",
+  },
+  {
+    id: "r5",
+    programme: "Digital ID Rollout",
+    pillar: "Governance",
+    owner: "MHAI",
+    date: "12 Jul 2025",
+    status: "Closed",
+    statusVariant: "closed",
+    confidence: "High",
+    phase: "closure",
+  },
+  {
+    id: "r6",
+    programme: "Rural Water Access",
+    pillar: "Human Development",
+    owner: "MAWLR",
+    date: "11 Jul 2025",
+    status: "Rejected",
+    statusVariant: "rejected",
+    confidence: "Low",
+    phase: "planning",
   },
 ];
 
-const timeline = [
+const initialTimeline = [
   {
     id: "t1",
     title: "Health for All report submitted",
@@ -134,60 +132,231 @@ const timeline = [
   },
 ];
 
-const workflowStages = [
-  {
-    stageKey: "planning",
-    title: "Planning phase",
-    description: "OMA drafts indicators & budgets",
-    stats: [
-      { label: "Awaiting NPC", value: "12" },
-      { label: "Revisions", value: "4" },
-    ],
-    statusText: "NPC review in progress",
-    statusTone: "neutral",
-  },
-  {
-    stageKey: "review",
-    title: "NPC approval gate",
-    description: "NPC validates feasibility & KPIs",
-    stats: [
-      { label: "Approved", value: "18" },
-      { label: "Rejected", value: "3" },
-    ],
-    statusText: "Gate open",
-    statusTone: "approved",
-  },
-  {
-    stageKey: "execution",
-    title: "Execution phase",
-    description: "OMA implements activities",
-    stats: [
-      { label: "In progress", value: "22" },
-      { label: "With issues", value: "5" },
-    ],
-    statusText: "On schedule",
-    statusTone: "approved",
-  },
-  {
-    stageKey: "closure",
-    title: "Closure & evaluation",
-    description: "NPC verifies deliverables at deadline",
-    stats: [
-      { label: "Closed", value: "7" },
-      { label: "Pending audits", value: "2" },
-    ],
-    statusText: "Awaiting evidence",
-    statusTone: "neutral",
-  },
-];
+const variantByStatus = {
+  Submitted: "submitted",
+  Pending: "pending",
+  Approved: "approved",
+  Rejected: "rejected",
+  Closed: "closed",
+};
 
 export default function NpcDashboard() {
+  const [reports, setReports] = useState(initialReports);
+  const [activityItems, setActivityItems] = useState(initialTimeline);
+  const [reportFilter, setReportFilter] = useState("pending");
+
+  const pendingCount = useMemo(
+    () => reports.filter((report) => ["Submitted", "Pending"].includes(report.status)).length,
+    [reports],
+  );
+  const approvedCount = useMemo(
+    () => reports.filter((report) => report.status === "Approved").length,
+    [reports],
+  );
+  const flaggedCount = useMemo(
+    () => reports.filter((report) => report.status === "Rejected").length,
+    [reports],
+  );
+  const totalReports = reports.length;
+
+  const statBlocks = useMemo(
+    () => [
+      {
+        label: "Total reports in cycle",
+        value: totalReports.toString(),
+        subtext: "All pillars • FY 2025/26",
+        trend: { direction: "up", value: "+12%" },
+      },
+      {
+        label: "Pending NPC review",
+        value: pendingCount.toString(),
+        subtext: "Need action",
+        trend: { direction: "down", value: "-4%" },
+        tone: pendingCount > 15 ? "warning" : "default",
+      },
+      {
+        label: "Flagged for follow-up",
+        value: flaggedCount.toString(),
+        subtext: "Escalated to sector leads",
+        trend: { direction: "up", value: `+${flaggedCount}` },
+        tone: flaggedCount ? "alert" : "default",
+      },
+    ],
+    [totalReports, pendingCount, flaggedCount],
+  );
+
+  const workflowStages = useMemo(() => {
+    const phaseCounts = reports.reduce(
+      (acc, report) => {
+        acc[report.phase] = (acc[report.phase] || 0) + 1;
+        return acc;
+      },
+      { planning: 0, execution: 0, closure: 0 },
+    );
+
+    return [
+      {
+        stageKey: "planning",
+        title: "Planning phase",
+        description: "OMAs align indicators & budgets",
+        stats: [
+          { label: "Awaiting NPC", value: phaseCounts.planning?.toString() ?? "0" },
+          { label: "Returned", value: flaggedCount.toString() },
+        ],
+        statusText: phaseCounts.planning ? "NPC review in progress" : "Backlog clear",
+        statusTone: phaseCounts.planning ? "neutral" : "approved",
+      },
+      {
+        stageKey: "execution",
+        title: "Execution phase",
+        description: "Projects currently live",
+        stats: [
+          { label: "In progress", value: phaseCounts.execution?.toString() ?? "0" },
+          {
+            label: "With issues",
+            value: Math.max(phaseCounts.execution - approvedCount, 0).toString(),
+          },
+        ],
+        statusText: "On schedule",
+        statusTone: "approved",
+      },
+      {
+        stageKey: "closure",
+        title: "Closure & evaluation",
+        description: "NPC verifies deliverables",
+        stats: [
+          { label: "Closed", value: phaseCounts.closure?.toString() ?? "0" },
+          { label: "Pending audits", value: Math.max(phaseCounts.closure - 1, 0).toString() },
+        ],
+        statusText: phaseCounts.closure ? "Awaiting evidence" : "Upcoming",
+        statusTone: "neutral",
+      },
+    ];
+  }, [reports, flaggedCount, approvedCount]);
+
+  const filteredReports = useMemo(() => {
+    if (reportFilter === "approved") {
+      return reports.filter((report) => report.status === "Approved");
+    }
+    if (reportFilter === "pending") {
+      return reports.filter((report) => ["Submitted", "Pending", "Rejected"].includes(report.status));
+    }
+    return reports;
+  }, [reports, reportFilter]);
+
+  const addTimelineEntry = (title, oma, status) => {
+    setActivityItems((prev) => [
+      {
+        id: `${Date.now()}`,
+        title,
+        oma,
+        timeAgo: "just now",
+        status,
+      },
+      ...prev,
+    ]);
+  };
+
+  const updateReport = (reportId, updates) => {
+    setReports((prev) =>
+      prev.map((report) => (report.id === reportId ? { ...report, ...updates } : report)),
+    );
+  };
+
+  const handleApprove = (report) => {
+    updateReport(report.id, {
+      status: "Approved",
+      statusVariant: variantByStatus.Approved,
+      phase: "execution",
+    });
+    addTimelineEntry(`NPC approved ${report.programme}`, report.owner, "Approved");
+  };
+
+  const handleReject = (report) => {
+    updateReport(report.id, {
+      status: "Rejected",
+      statusVariant: variantByStatus.Rejected,
+      phase: "planning",
+    });
+    addTimelineEntry(`NPC rejected ${report.programme}`, report.owner, "Rework");
+  };
+
+  const handleClose = (report) => {
+    updateReport(report.id, {
+      status: "Closed",
+      statusVariant: variantByStatus.Closed,
+      phase: "closure",
+    });
+    addTimelineEntry(`${report.programme} moved to closure`, report.owner, "Closed");
+  };
+
+  const renderActions = (report) => {
+    const buttons = [];
+    if (["Submitted", "Pending", "Rejected"].includes(report.status)) {
+      buttons.push(
+        <button
+          key={`${report.id}-approve`}
+          type="button"
+          className="primary"
+          onClick={() => handleApprove(report)}
+        >
+          Approve
+        </button>,
+      );
+    }
+    if (["Submitted", "Pending"].includes(report.status)) {
+      buttons.push(
+        <button
+          key={`${report.id}-reject`}
+          type="button"
+          className="danger"
+          onClick={() => handleReject(report)}
+        >
+          Reject
+        </button>,
+      );
+    }
+    if (report.phase === "execution" && report.status === "Approved") {
+      buttons.push(
+        <button
+          key={`${report.id}-close`}
+          type="button"
+          className="success"
+          onClick={() => handleClose(report)}
+        >
+          Close
+        </button>,
+      );
+    }
+
+    return buttons;
+  };
+
+  const reportFilters = (
+    <div className="npc-report-filters">
+      {[
+        { label: "Pending review", value: "pending" },
+        { label: "Approved", value: "approved" },
+        { label: "All", value: "all" },
+      ].map((filter) => (
+        <button
+          key={filter.value}
+          type="button"
+          className={reportFilter === filter.value ? "is-active" : ""}
+          onClick={() => setReportFilter(filter.value)}
+        >
+          {filter.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="npc-dashboard">
       <NpcTopNav />
 
       <div className="npc-dashboard__grid">
-        <NpcSideNav />
+        <NpcSideNav pendingApprovals={pendingCount} />
 
         <main className="npc-dashboard__main">
           <section className="npc-section">
@@ -195,12 +364,11 @@ export default function NpcDashboard() {
               <div>
                 <p className="npc-section__eyebrow">Monitoring overview</p>
                 <h1 className="npc-section__title">NPC national dashboard</h1>
+                <p className="npc-section__description">
+                  Focus on the live review queue while OMAs progress through execution and closure.
+                </p>
               </div>
-              <button className="npc-primary" type="button">
-                Export summary PDF
-              </button>
             </div>
-
             <div className="npc-stats-grid">
               {statBlocks.map((stat) => (
                 <StatCard key={stat.label} {...stat} />
@@ -211,19 +379,20 @@ export default function NpcDashboard() {
           <section className="npc-section">
             <div className="npc-section__head">
               <div>
-                <p className="npc-section__eyebrow">Workflow control</p>
-                <h2 className="npc-section__title">Planning → Execution → Closure</h2>
-                <p className="npc-section__description">
-                  NPC validates OMA plans, unlocks execution, and closes projects when the deadline hits.
-                </p>
+                <p className="npc-section__eyebrow">Review queue</p>
+                <h2 className="npc-section__title">Submissions waiting for action</h2>
               </div>
             </div>
-
-            <div className="npc-workflow-grid">
-              {workflowStages.map((stage) => (
-                <WorkflowStageCard key={stage.stageKey} {...stage} />
-              ))}
-            </div>
+            <p className="npc-review-summary">
+              <strong>{pendingCount}</strong> awaiting decision • <strong>{approvedCount}</strong> approved •{" "}
+              <strong>{flaggedCount}</strong> flagged • <strong>{totalReports}</strong> total in cycle
+            </p>
+            <ReportsTable
+              reports={filteredReports}
+              renderActions={renderActions}
+              filters={reportFilters}
+              title="Live submissions"
+            />
           </section>
 
           <section className="npc-section npc-section--split">
@@ -243,21 +412,15 @@ export default function NpcDashboard() {
                 </div>
               </div>
 
-              <ReportsTable reports={reports} />
+              <ActivityTimeline items={activityItems} />
             </div>
 
             <div className="npc-section__column npc-section__column--narrow">
-              <div className="npc-card npc-card--accent">
-                <p className="npc-card__title">Approvals this week</p>
-                <p className="npc-highlight">26</p>
-                <p className="npc-card__subtitle">+8% vs previous week</p>
-                <div className="npc-mini-bars">
-                  {[64, 52, 78, 45, 90].map((value, index) => (
-                    <span key={value + index} style={{ height: `${value}%` }} />
-                  ))}
-                </div>
-              </div>
-
+              <NpcApprovalSpotlight
+                pending={pendingCount}
+                approved={approvedCount}
+                rejected={flaggedCount}
+              />
               <div className="npc-card">
                 <p className="npc-card__title">Indicator progress</p>
                 <div className="npc-indicators">
@@ -275,8 +438,6 @@ export default function NpcDashboard() {
                   </div>
                 </div>
               </div>
-
-              <ActivityTimeline items={timeline} />
             </div>
           </section>
         </main>
@@ -284,4 +445,5 @@ export default function NpcDashboard() {
     </div>
   );
 }
+
 

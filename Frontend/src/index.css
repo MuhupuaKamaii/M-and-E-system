@@ -51,10 +51,10 @@ img {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: 320px 1fr auto auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 2rem;
+  gap: 1rem;
+  padding: 0.6rem 1.5rem;
   background: var(--brand-navy);
   color: #fff;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -83,14 +83,32 @@ img {
   opacity: 0.8;
 }
 
+.npc-nav__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .npc-nav__search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 320px;
+}
+
+.npc-nav__admin {
+  justify-self: end;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .npc-nav__search input {
@@ -101,68 +119,14 @@ img {
   font-size: 0.9rem;
 }
 
-.npc-nav__links {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
-}
-
-.npc-nav__links a {
-  color: #d5e6ff;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.npc-nav__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.npc-icon-button {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.npc-indicator {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: var(--accent-amber);
-  color: var(--brand-navy);
-  font-size: 0.7rem;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.npc-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.npc-profile__name {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
+.npc-nav__links,
+.npc-nav__actions,
+.npc-icon-button,
+.npc-indicator,
+.npc-profile,
+.npc-profile__name,
 .npc-profile__cta {
-  background: none;
-  border: none;
-  color: #c5d8ff;
-  font-size: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  cursor: pointer;
+  display: none;
 }
 
 .npc-dashboard__grid {
@@ -174,6 +138,46 @@ img {
 .npc-sidenav {
   background: var(--brand-navy-dark);
   padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: calc(100vh - 72px);
+}
+
+.npc-approval--compact {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  margin-bottom: 1.25rem;
+}
+
+.npc-approval--compact p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.npc-approval--compact span {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.npc-approval--compact .npc-approval__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5cf72;
+}
+
+.npc-sidenav__list {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -336,16 +340,19 @@ img {
   gap: 1rem;
 }
 
-.npc-card--accent {
-  background: linear-gradient(150deg, #15416b, #0c2a46);
-  color: #fff;
-}
-
 .npc-card__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.npc-card__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .npc-card__title {
@@ -357,28 +364,6 @@ img {
   margin: 0;
   color: var(--muted);
   font-size: 0.85rem;
-}
-
-.npc-card--accent .npc-card__subtitle {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.npc-highlight {
-  font-size: 2.8rem;
-  margin: 0;
-  font-weight: 700;
-}
-
-.npc-mini-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.4rem;
-}
-
-.npc-mini-bars span {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
 }
 
 .npc-progress-grid {
@@ -444,86 +429,6 @@ img {
   color: var(--muted);
 }
 
-.npc-workflow-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.npc-workflow {
-  border: 1px dashed var(--border);
-  border-radius: 18px;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  background: #fff;
-}
-
-.npc-workflow header {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.npc-workflow__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--brand-navy);
-}
-
-.npc-workflow__title {
-  margin: 0;
-  font-weight: 600;
-}
-
-.npc-workflow__description {
-  margin: 0.2rem 0 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.npc-workflow__stats {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.npc-workflow__value {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.npc-workflow__label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.npc-workflow__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.npc-workflow__status--approved {
-  color: var(--success);
-}
-
-.npc-workflow__status--rejected {
-  color: var(--alert);
-}
-
-.npc-workflow__status--neutral {
-  color: var(--warning);
-}
 
 .npc-link-button {
   display: inline-flex;
@@ -534,6 +439,71 @@ img {
   border-radius: 999px;
   font-weight: 600;
   color: var(--brand-navy);
+}
+
+.npc-report-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.npc-review-summary {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.npc-review-summary strong {
+  color: var(--brand-navy);
+}
+
+.npc-report-filters button {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.npc-report-filters button.is-active {
+  background: var(--brand-navy);
+  color: #fff;
+  border-color: var(--brand-navy);
+}
+
+.npc-approval {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  gap: 1.25rem;
+}
+
+.npc-approval__stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.npc-approval__stats > div {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  background: var(--surface);
+  flex: 1;
+}
+
+.npc-approval__stats p {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.npc-approval__stats span {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .npc-table__wrap {
@@ -594,6 +564,82 @@ img {
 .npc-pill--pending {
   background: rgba(244, 179, 61, 0.2);
   color: var(--warning);
+}
+
+.npc-pill--rejected {
+  background: rgba(192, 52, 42, 0.15);
+  color: var(--alert);
+}
+
+.npc-pill--closed {
+  background: rgba(14, 53, 93, 0.15);
+  color: var(--brand-navy);
+}
+
+.npc-action-buttons {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.npc-action-buttons button {
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  background: #fff;
+}
+
+.npc-action-buttons button.primary {
+  background: var(--brand-navy);
+  color: #fff;
+  border-color: var(--brand-navy);
+}
+
+.npc-action-buttons button.danger {
+  color: var(--alert);
+  border-color: rgba(192, 52, 42, 0.3);
+}
+
+.npc-action-buttons button.success {
+  color: var(--success);
+  border-color: rgba(47, 155, 98, 0.4);
+}
+
+.npc-reviewer {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f4f8ff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.npc-reviewer__avatar {
+  color: #fcd981;
+}
+
+.npc-reviewer__name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.npc-reviewer__role {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.npc-reviewer__meta p {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .npc-timeline {
