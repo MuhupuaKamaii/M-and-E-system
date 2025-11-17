@@ -2,8 +2,8 @@
 
 ## module that you need to install
 - npm install express pg  dotenv @supabase/supabase-js bcrypt jsonwebtoken cors
-- 
 - npm install
+- npm install axios
 - npm install react-router-dom (only if navigating from one page is needed)
 
 ## How to push to github
@@ -32,6 +32,22 @@
 6. git push origin main
     - Push Your Changes
 
+## How to push everything expect App.jsx
+1. Add all files except App.jsx
+    - git add . ':!Frontend/src/App.jsx'
+    - ':!' tells Git to exclude that file.
+
+2. Check what will be committed
+    - git status
+
+3. Commit
+    - git commit -m "Your message"
+
+
+4. Push
+    - git push
+
+
 # Frontend
 
 ## module that you need to install
@@ -42,3 +58,14 @@
 - Created a folder in the frontend test so we can test if the functions are working. So dont really mind it. You can take the logic to help you guys. Remember this is just plain syntax for testing.
 
 -  
+
+## Login Password
+### Admin
+    - Username:admin
+    - Password:Admin123
+### NPC
+    - Username:npc
+    - Password:npc
+### OMA
+    - Username:oma
+    - Password:oma
