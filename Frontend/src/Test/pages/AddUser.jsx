@@ -24,13 +24,12 @@ function AddUser() {
   // Fetch focus areas dynamically when role=OMA and organisation changes
   useEffect(() => {
     if (form.role_id === "3" && form.organisation_id) {
-      fetch(`http://localhost:4000/api/focus-areas`, {
+      fetch(`http://localhost:4000/api/focus-areas/by-org/${form.organisation_id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
         .then(data => {
-          // Filter focus areas for selected organisation
-          const filtered = data.focusAreas.filter(
+          const filtered = (data.focusAreas || []).filter(
             fa => fa.organisation_id === parseInt(form.organisation_id)
           );
           setFocusAreas(filtered);
@@ -41,7 +40,7 @@ function AddUser() {
         });
     } else {
       setFocusAreas([]);
-      setForm(prev => ({ ...prev, focus_area_id: "" })); // Reset focus area
+      setForm(prev => ({ ...prev, focus_area_id: "" }));
     }
   }, [form.role_id, form.organisation_id, token]);
 
@@ -57,17 +56,19 @@ function AddUser() {
     e.preventDefault();
     setMessage("");
 
-    // Convert fields to numbers where needed
     const payload = {
       full_name: form.full_name,
       username: form.username,
       password: form.password,
       role_id: parseInt(form.role_id),
-      organisation_id: form.organisation_id ? parseInt(form.organisation_id) : null,
-      focus_area_id: form.focus_area_id ? parseInt(form.focus_area_id) : null,
+      organisation_id: form.organisation_id
+        ? parseInt(form.organisation_id)
+        : null,
+      focus_area_id: form.focus_area_id
+        ? parseInt(form.focus_area_id)
+        : null,
     };
 
-    // OMA role validation
     if (payload.role_id === 3 && (!payload.organisation_id || !payload.focus_area_id)) {
       setMessage("Organisation and Focus Area are required for OMA role");
       return;
@@ -144,17 +145,44 @@ function AddUser() {
         </select>
         <br /><br />
 
+        {/* Organisation selection (for OMA) */}
         {form.role_id === "3" && (
           <>
             <label>Organisation (OMA):</label>
             <select
               value={form.organisation_id}
-              onChange={(e) => setForm({ ...form, organisation_id: e.target.value, focus_area_id: "" })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  organisation_id: e.target.value,
+                  focus_area_id: ""
+                })
+              }
               required
             >
               <option value="">Select Organisation</option>
               {organisations.map(org => (
                 <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+            <br /><br />
+          </>
+        )}
+
+        {/* Focus area selection (for OMA) */}
+        {form.role_id === "3" && (
+          <>
+            <label>Focus Area (Required for OMA):</label>
+            <select
+              value={form.focus_area_id}
+              onChange={(e) => setForm({ ...form, focus_area_id: e.target.value })}
+              required
+            >
+              <option value="">Select Focus Area</option>
+              {focusAreas.map(fa => (
+                <option key={fa.focus_area_id} value={fa.focus_area_id}>
+                  {fa.name}
+                </option>
               ))}
             </select>
             <br /><br />

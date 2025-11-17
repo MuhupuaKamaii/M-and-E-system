@@ -29,7 +29,7 @@ function Login() {
       localStorage.setItem("token", user.token);
       localStorage.setItem("userId", user.userId || user.user_id);
       localStorage.setItem("fullName", user.fullName || user.full_name);
-      localStorage.setItem("role", user.role);
+      localStorage.setItem("role", user.role.trim().toUpperCase());
       localStorage.setItem("organisationId", user.organisationId || user.organisation_id);
       localStorage.setItem("focusAreaId", user.focusAreaId || user.focus_area_id);
 

@@ -1,48 +1,53 @@
-// backend/routes/focusAreaRoutes.js
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 const supabase = require("../config/supabaseClient");
+const authMiddleware = require("../middleware/authMiddleware");
 
-// Get all focus areas for this user
+// GET /api/focus-areas -> get all focus areas (role-based)
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from("focus_area")
-      .select("*")
-      .eq("organisation_id", req.user.organisation_id);
+    let query = supabase.from("focus_area").select("*");
 
-    if (error) throw error;
+    let data, error;
+
+    // OMA (role_id = 2) → return ALL focus areas
+    if (req.user.role_id === 2) {
+      ({ data, error } = await query);
+    } else {
+      // Other users → only focus areas in their organisation
+      ({ data, error } = await query.eq("organisation_id", req.user.organisation_id));
+    }
+
+    if (error) return res.status(400).json({ message: error.message });
 
     res.json({ focusAreas: data });
   } catch (err) {
+    console.error("Fetch focus areas error:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Get details for a specific focus area
+// GET /api/focus-areas/:id/details
 router.get("/:focusAreaId/details", authMiddleware, async (req, res) => {
-  const focusAreaId = parseInt(req.params.focusAreaId);
-
   try {
+    const focusAreaId = Number(req.params.focusAreaId);
+
     const { data: focusArea, error } = await supabase
       .from("focus_area")
-      .select(`
-        id,
-        name,
-        theme:theme_id (id, name, pillar:pillar_id (id, name)),
-        programmes:programme_id (id, name, strategies:strategy_id (id, description))
-      `)
-      .eq("id", focusAreaId)
-      .eq("organisation_id", req.user.organisation_id)
+      .select("*")
+      .eq("focus_area_id", focusAreaId)
       .single();
 
-    if (error || !focusArea) {
-      return res.status(404).json({ message: "Focus area not found" });
+    if (error || !focusArea) return res.status(404).json({ message: "Focus area not found" });
+
+    // Access control: OMA can access all; others must match org
+    if (req.user.role_id !== 2 && focusArea.organisation_id !== req.user.organisation_id) {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     res.json(focusArea);
   } catch (err) {
+    console.error("Focus area details error:", err);
     res.status(500).json({ message: err.message });
   }
 });

@@ -2,8 +2,8 @@
 
 ## module that you need to install
 - npm install express pg  dotenv @supabase/supabase-js bcrypt jsonwebtoken cors
-- 
 - npm install
+- npm install axios
 - npm install react-router-dom (only if navigating from one page is needed)
 
 ## How to push to github
@@ -42,3 +42,14 @@
 - Created a folder in the frontend test so we can test if the functions are working. So dont really mind it. You can take the logic to help you guys. Remember this is just plain syntax for testing.
 
 -  
+
+## Login Password
+### Admin
+    - Username:admin
+    - Password:Admin123
+### NPC
+    - Username:npc
+    - Password:npc
+### OMA
+    - Username:oma
+    - Password:oma
