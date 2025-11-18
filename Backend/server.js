@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes'); // Auth routes
 const adminRoutes = require('./routes/adminRoutes'); // Optional admin routes
 const focusAreaRoutes = require("./routes/focusAreaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const activityRoutes = require('./routes/activityRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes); // Optional, if you have admin routes
 app.use("/api/focus-areas", focusAreaRoutes);
 app.use("/api/reports", reportRoutes);
+app.use('/api/user-activities', activityRoutes);
 
 
 // Start server
