@@ -48,7 +48,7 @@ async function login(username, password) {
       organisation_id: user.organisation_id
     },
     process.env.JWT_SECRET,
-    { expiresIn: '5h' } // Token expires in 5 hours
+    { expiresIn: '1h' } // Token expires in 1 hour
   );
 
   // Return user data + token

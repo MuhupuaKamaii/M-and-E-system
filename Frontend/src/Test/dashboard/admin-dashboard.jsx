@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
@@ -11,42 +11,86 @@ import CountUp from "react-countup";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
+const API_BASE_URL = "http://localhost:4000/api";
+
 export default function AdminDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      const currentToken = localStorage.getItem("token"); // Get fresh token each time
+
+
+      if (!currentToken) { //using currentToken here instead of token
+        navigate("/login");
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentToken}`,
+          },
+        });
+
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.clear();
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await response.json();
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activePage === "dashboard") {
+      fetchStats();
+    }
+  }, [activePage, navigate]); //remmove token from dependency array
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("role");
+    localStorage.removeItem("organisationId");
+    localStorage.removeItem("focusAreaId");
     navigate("/login");
   };
 
-  // Dummy stats data
-  const stats = {
-    totalUsers: 12,
-    admins: 2,
-    omaUsers: 5,
-    npcUsers: 5,
-    organisations: [
-      { name: "MAFWLR", users: 5 },
-      { name: "MIRT", users: 4 },
-      { name: "MIME", users: 3 },
-    ],
-  };
-
-  // Pie Chart: Users by Role
-  const pieData = {
-    labels: ["Admins", "OMA Users", "NPC Users"],
+  // Prepare chart data
+  const pieData = stats ? {
+    labels: ["Admins", "NPC Users", "OMA Users"],
     datasets: [
       {
-        data: [stats.admins, stats.omaUsers, stats.npcUsers],
+        data: [stats.admins, stats.npcUsers, stats.omaUsers],
         backgroundColor: ["#003366", "#0056a6", "#00a6ff"],
         hoverOffset: 10,
       },
     ],
-  };
+  } : null;
 
-  // Bar Chart: Users by Organisation
-  const barData = {
+  const barData = stats ? {
     labels: stats.organisations.map((org) => org.name),
     datasets: [
       {
@@ -56,7 +100,7 @@ export default function AdminDashboard() {
         borderRadius: 6,
       },
     ],
-  };
+  } : null;
 
   const styles = {
     container: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif", backgroundColor: "#f4f6f8", color: "#1a1a1a" },
@@ -86,49 +130,65 @@ export default function AdminDashboard() {
     statLabel: { opacity: 0.8, marginTop: "5px" },
     chartWrapper: { display: "flex", gap: "20px", flexWrap: "wrap" },
     chartCard: { flex: "1 1 400px", background: "#fff", padding: "20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
+    loadingMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#666" },
+    errorMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#dc2626", backgroundColor: "#fee", borderRadius: "8px" },
   };
 
-  const renderDashboardOverview = () => (
-    <>
-      <h1 style={styles.header}>Dashboard Overview</h1>
-      <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
+  const renderDashboardOverview = () => {
+    if (loading) {
+      return <div style={styles.loadingMsg}>Loading dashboard data...</div>;
+    }
 
-      {/* Stats Cards */}
-      <div style={styles.statsContainer}>
-        {[
-          { label: "Total Users", value: stats.totalUsers },
-          { label: "Admins", value: stats.admins },
-          { label: "OMA Users", value: stats.omaUsers },
-          { label: "NPC Users", value: stats.npcUsers },
-        ].map((stat, idx) => (
-          <div
-            key={idx}
-            style={styles.statCard}
-            onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.statCardHover)}
-            onMouseLeave={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" })}
-          >
-            <div style={styles.statValue}>
-              <CountUp end={stat.value} duration={1.5} separator="," />
+    if (error) {
+      return <div style={styles.errorMsg}>Error: {error}</div>;
+    }
+
+    if (!stats) {
+      return <div style={styles.loadingMsg}>No data available</div>;
+    }
+
+    return (
+      <>
+        <h1 style={styles.header}>Dashboard Overview</h1>
+        <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
+
+        {/* Stats Cards */}
+        <div style={styles.statsContainer}>
+          {[
+            { label: "Total Users", value: stats.totalUsers },
+            { label: "Admins", value: stats.admins },
+            { label: "OMA Users", value: stats.omaUsers },
+            { label: "NPC Users", value: stats.npcUsers },
+          ].map((stat, idx) => (
+            <div
+              key={idx}
+              style={styles.statCard}
+              onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.statCardHover)}
+              onMouseLeave={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" })}
+            >
+              <div style={styles.statValue}>
+                <CountUp end={stat.value} duration={1.5} separator="," />
+              </div>
+              <div style={styles.statLabel}>{stat.label}</div>
             </div>
-            <div style={styles.statLabel}>{stat.label}</div>
+          ))}
+        </div>
+
+        {/* Charts */}
+        <div style={styles.chartWrapper}>
+          <div style={styles.chartCard}>
+            <h3 style={{ marginBottom: "10px" }}>Users by Role</h3>
+            {pieData && <Pie data={pieData} />}
           </div>
-        ))}
-      </div>
 
-      {/* Charts */}
-      <div style={styles.chartWrapper}>
-        <div style={styles.chartCard}>
-          <h3 style={{ marginBottom: "10px" }}>Users by Role</h3>
-          <Pie data={pieData} />
+          <div style={styles.chartCard}>
+            <h3 style={{ marginBottom: "10px" }}>Users per Organisation</h3>
+            {barData && <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />}
+          </div>
         </div>
-
-        <div style={styles.chartCard}>
-          <h3 style={{ marginBottom: "10px" }}>Users per Organisation</h3>
-          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-        </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <div style={styles.container}>
