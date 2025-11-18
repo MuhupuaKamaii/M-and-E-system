@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { FiEdit, FiTrash2, FiSearch, FiX, FiPlus } from "react-icons/fi";
 
+const API_BASE_URL = "http://localhost:4000/api";
+
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,6 +16,14 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchOrganisations();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const token = localStorage.getItem("token");
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
@@ -33,6 +43,26 @@ export default function UserManagement() {
       setOrganisations(data.organisations || []);
     } catch (err) {
       console.error('Failed to fetch organisations', err);
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      setUsers(data.users || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +127,63 @@ export default function UserManagement() {
         setShowCreateModal(false);
       })
       .catch(err => console.error('Create failed', err));
+  const handleDeleteClick = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Failed to delete user");
+        return;
+      }
+
+      // Remove user from local state
+      setUsers(users.filter((u) => u.id !== userId));
+      alert("User deleted successfully");
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      alert("Error deleting user");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/users/${editUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: editUser.full_name,
+          username: editUser.username,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Failed to update user");
+        return;
+      }
+
+      // Update user in local state
+      setUsers(users.map((u) => (u.id === editUser.id ? editUser : u)));
+      setShowModal(false);
+      setEditUser(null);
+      alert("User updated successfully");
+    } catch (err) {
+      console.error("Error updating user:", err);
+      alert("Error updating user");
+    }
   };
 
   const styles = {
@@ -155,6 +242,7 @@ export default function UserManagement() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={styles.searchWrapper}>
+      <div style={styles.searchWrapper}>
         <FiSearch size={18} color="#0d1b2a" />
         <input
           type="text"
@@ -163,8 +251,6 @@ export default function UserManagement() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        </div>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display:'inline-flex', gap:8, alignItems:'center' }}><FiPlus /> New User</button>
       </div>
 
       <div style={styles.tableWrapper}>
@@ -230,17 +316,12 @@ export default function UserManagement() {
               {organisations.map(o => <option key={o.organisation_id || o.id} value={o.name}>{o.name}</option>)}
             </select>
             <button style={styles.modalSaveBtn} onClick={handleSaveEdit}>Save Changes</button>
-          </div>
-        </div>
-      )}
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <FiX style={styles.modalClose} onClick={() => setShowCreateModal(false)} />
-            <h3 style={styles.modalHeader}>Create New User</h3>
-            <CreateForm organisations={organisations} onCreate={handleCreateUser} onCancel={() => setShowCreateModal(false)} />
+            <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "12px" }}>
+              Role: <strong>{editUser.role}</strong> | Organisation: <strong>{editUser.organisation}</strong>
+            </p>
+            <button style={styles.modalSaveBtn} onClick={handleSaveEdit}>
+              Save Changes
+            </button>
           </div>
         </div>
       )}
@@ -281,4 +362,5 @@ function CreateForm({ organisations, onCreate, onCancel }){
       </div>
     </div>
   )
+}
 }
