@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
@@ -12,79 +12,16 @@ import CountUp from "react-countup";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
-const API_BASE_URL = "http://localhost:4000/api";
-
 export default function AdminDashboard() {
-<<<<<<< HEAD
   const [page, setPage] = useState("dashboard");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-=======
-  const [activePage, setActivePage] = useState("dashboard");
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
   const navigate = useNavigate();
-
-
-  // Fetch dashboard statistics
-  useEffect(() => {
-    const fetchStats = async () => {
-      const currentToken = localStorage.getItem("token"); // Get fresh token each time
-
-
-      if (!currentToken) { //using currentToken here instead of token
-        navigate("/login");
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${currentToken}`,
-          },
-        });
-
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.clear();
-            navigate("/login");
-            return;
-          }
-          throw new Error("Failed to fetch dashboard data");
-        }
-
-        const data = await response.json();
-        setStats(data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching stats:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (activePage === "dashboard") {
-      fetchStats();
-    }
-  }, [activePage, navigate]); //remmove token from dependency array
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("fullName");
-    localStorage.removeItem("role");
-    localStorage.removeItem("organisationId");
-    localStorage.removeItem("focusAreaId");
     navigate("/login");
   };
 
-<<<<<<< HEAD
 
   // Dummy stats data
   const stats = {
@@ -101,25 +38,16 @@ export default function AdminDashboard() {
 
   const pieData = {
     labels: ["Admins", "OMA Users", "NPC Users"],
-=======
-  // Prepare chart data
-  const pieData = stats ? {
-    labels: ["Admins", "NPC Users", "OMA Users"],
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
     datasets: [
       {
-        data: [stats.admins, stats.npcUsers, stats.omaUsers],
+        data: [stats.admins, stats.omaUsers, stats.npcUsers],
         backgroundColor: ["#003366", "#0056a6", "#00a6ff"],
         hoverOffset: 10,
       },
     ],
-  } : null;
+  };
 
-<<<<<<< HEAD
   const barData = {
-=======
-  const barData = stats ? {
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
     labels: stats.organisations.map((org) => org.name),
     datasets: [
       {
@@ -129,7 +57,7 @@ export default function AdminDashboard() {
         borderRadius: 6,
       },
     ],
-  } : null;
+  };
 
   const styles = {
     container: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif", backgroundColor: "#f4f6f8", color: "#1a1a1a" },
@@ -143,38 +71,16 @@ export default function AdminDashboard() {
     header: { fontSize: "2rem", fontWeight: "700", marginBottom: "10px" },
     subtext: { opacity: 0.7, marginBottom: "25px", fontSize: "1rem" },
     card: { backgroundColor: "#fff", padding: "30px", borderRadius: "14px", boxShadow: "0 4px 18px rgba(0,0,0,0.12)", marginBottom: "30px" },
-<<<<<<< HEAD
     buttonPrimary: { padding: "10px 20px", background: "#003366", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" },
     modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
     modalContent: { background: "#fff", padding: "30px", borderRadius: "12px", width: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 4px 18px rgba(0,0,0,0.3)" },
-=======
-    statsContainer: { display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" },
-    statCard: {
-      flex: "1 1 200px",
-      background: "#0d1b2a",
-      color: "#fff",
-      padding: "25px",
-      borderRadius: "12px",
-      boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-      transition: "0.3s",
-      cursor: "pointer",
-    },
-    statCardHover: { transform: "translateY(-5px)", boxShadow: "0 8px 25px rgba(0,0,0,0.3)" },
-    statValue: { fontSize: "1.8rem", fontWeight: "700" },
-    statLabel: { opacity: 0.8, marginTop: "5px" },
-    chartWrapper: { display: "flex", gap: "20px", flexWrap: "wrap" },
-    chartCard: { flex: "1 1 400px", background: "#fff", padding: "20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
-    loadingMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#666" },
-    errorMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#dc2626", backgroundColor: "#fee", borderRadius: "8px" },
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
   };
 
-  const renderDashboardOverview = () => {
-    if (loading) {
-      return <div style={styles.loadingMsg}>Loading dashboard data...</div>;
-    }
+  const renderDashboardOverview = () => (
+    <>
+      <h1 style={styles.header}>Dashboard Overview</h1>
+      <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
 
-<<<<<<< HEAD
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" }}>
         {[{ label: "Total Users", value: stats.totalUsers },
         { label: "Admins", value: stats.admins },
@@ -183,51 +89,10 @@ export default function AdminDashboard() {
           <div key={idx} style={{ background: "#0d1b2a", color: "#fff", padding: "25px", borderRadius: "12px", flex: "1 1 200px" }}>
             <div style={{ fontSize: "1.8rem", fontWeight: "700" }}><CountUp end={stat.value} duration={1.5} /></div>
             <div>{stat.label}</div>
-=======
-    if (error) {
-      return <div style={styles.errorMsg}>Error: {error}</div>;
-    }
-
-    if (!stats) {
-      return <div style={styles.loadingMsg}>No data available</div>;
-    }
-
-    return (
-      <>
-        <h1 style={styles.header}>Dashboard Overview</h1>
-        <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
-
-        {/* Stats Cards */}
-        <div style={styles.statsContainer}>
-          {[
-            { label: "Total Users", value: stats.totalUsers },
-            { label: "Admins", value: stats.admins },
-            { label: "OMA Users", value: stats.omaUsers },
-            { label: "NPC Users", value: stats.npcUsers },
-          ].map((stat, idx) => (
-            <div
-              key={idx}
-              style={styles.statCard}
-              onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.statCardHover)}
-              onMouseLeave={(e) => Object.assign(e.currentTarget.style, { transform: "none", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" })}
-            >
-              <div style={styles.statValue}>
-                <CountUp end={stat.value} duration={1.5} separator="," />
-              </div>
-              <div style={styles.statLabel}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Charts */}
-        <div style={styles.chartWrapper}>
-          <div style={styles.chartCard}>
-            <h3 style={{ marginBottom: "10px" }}>Users by Role</h3>
-            {pieData && <Pie data={pieData} />}
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
           </div>
+        ))}
+      </div>
 
-<<<<<<< HEAD
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         <div style={styles.card}>
           <h3>Users by Role</h3>
@@ -241,16 +106,6 @@ export default function AdminDashboard() {
       </div>
     </>
   );
-=======
-          <div style={styles.chartCard}>
-            <h3 style={{ marginBottom: "10px" }}>Users per Organisation</h3>
-            {barData && <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />}
-          </div>
-        </div>
-      </>
-    );
-  };
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
 
   return (
     <div style={styles.container}>
