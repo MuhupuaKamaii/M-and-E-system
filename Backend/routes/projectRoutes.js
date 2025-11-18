@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
                 const { data: user, error } = await supabase
                     .from('users')
                     .select('*')
-                    .eq('id', decoded.user_id)
+                    .eq('user_id', decoded.user_id)
                     .single();
                 if (!error && user) {
                     user_id = user.id;

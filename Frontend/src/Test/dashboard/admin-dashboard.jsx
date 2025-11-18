@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
@@ -15,39 +15,76 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 export default function AdminDashboard() {
   const [page, setPage] = useState("dashboard");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const res = await fetch("/api/dashboard/stats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.clear();
+          navigate("/login");
+          return;
+        }
+        throw new Error("Failed to fetch dashboard statistics");
+      }
+
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("role");
+    localStorage.removeItem("organisationId");
+    localStorage.removeItem("focusAreaId");
     navigate("/login");
   };
 
-
-  // Dummy stats data
-  const stats = {
-    totalUsers: 12,
-    admins: 2,
-    omaUsers: 5,
-    npcUsers: 5,
-    organisations: [
-      { name: "MAFWLR", users: 5 },
-      { name: "MIRT", users: 4 },
-      { name: "MIME", users: 3 },
-    ],
+  const handleUserCreated = () => {
+    // Refresh stats after user creation
+    fetchDashboardStats();
+    setShowAddUserModal(false);
   };
 
-  const pieData = {
-    labels: ["Admins", "OMA Users", "NPC Users"],
+  // Prepare chart data
+  const pieData = stats ? {
+    labels: ["Admins", "NPC Users", "OMA Users"],
     datasets: [
       {
-        data: [stats.admins, stats.omaUsers, stats.npcUsers],
+        data: [stats.admins, stats.npcUsers, stats.omaUsers],
         backgroundColor: ["#003366", "#0056a6", "#00a6ff"],
         hoverOffset: 10,
       },
     ],
-  };
+  } : null;
 
-  const barData = {
+  const barData = stats ? {
     labels: stats.organisations.map((org) => org.name),
     datasets: [
       {
@@ -57,7 +94,7 @@ export default function AdminDashboard() {
         borderRadius: 6,
       },
     ],
-  };
+  } : null;
 
   const styles = {
     container: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif", backgroundColor: "#f4f6f8", color: "#1a1a1a" },
@@ -74,38 +111,77 @@ export default function AdminDashboard() {
     buttonPrimary: { padding: "10px 20px", background: "#003366", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" },
     modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
     modalContent: { background: "#fff", padding: "30px", borderRadius: "12px", width: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 4px 18px rgba(0,0,0,0.3)" },
+    loadingContainer: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px", fontSize: "1.2rem", color: "#666" },
+    errorContainer: { padding: "20px", backgroundColor: "#fee", color: "#c00", borderRadius: "8px", marginBottom: "20px" },
+    retryButton: { padding: "8px 16px", background: "#003366", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", marginTop: "10px" },
   };
 
-  const renderDashboardOverview = () => (
-    <>
-      <h1 style={styles.header}>Dashboard Overview</h1>
-      <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
+  const renderDashboardOverview = () => {
+    if (loading) {
+      return (
+        <div style={styles.loadingContainer}>
+          <div>Loading dashboard data...</div>
+        </div>
+      );
+    }
 
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" }}>
-        {[{ label: "Total Users", value: stats.totalUsers },
-        { label: "Admins", value: stats.admins },
-        { label: "OMA Users", value: stats.omaUsers },
-        { label: "NPC Users", value: stats.npcUsers }].map((stat, idx) => (
-          <div key={idx} style={{ background: "#0d1b2a", color: "#fff", padding: "25px", borderRadius: "12px", flex: "1 1 200px" }}>
-            <div style={{ fontSize: "1.8rem", fontWeight: "700" }}><CountUp end={stat.value} duration={1.5} /></div>
-            <div>{stat.label}</div>
+    if (error) {
+      return (
+        <div>
+          <div style={styles.errorContainer}>
+            <strong>Error loading dashboard:</strong> {error}
+            <br />
+            <button style={styles.retryButton} onClick={fetchDashboardStats}>
+              Retry
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      );
+    }
 
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        <div style={styles.card}>
-          <h3>Users by Role</h3>
-          <Pie data={pieData} />
+    if (!stats) {
+      return <div style={styles.loadingContainer}>No data available</div>;
+    }
+
+    return (
+      <>
+        <h1 style={styles.header}>Dashboard Overview</h1>
+        <p style={styles.subtext}>Welcome! Monitor system statistics and manage users efficiently.</p>
+
+        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" }}>
+          {[
+            { label: "Total Users", value: stats.totalUsers },
+            { label: "Admins", value: stats.admins },
+            { label: "NPC Users", value: stats.npcUsers },
+            { label: "OMA Users", value: stats.omaUsers }
+          ].map((stat, idx) => (
+            <div key={idx} style={{ background: "#0d1b2a", color: "#fff", padding: "25px", borderRadius: "12px", flex: "1 1 200px" }}>
+              <div style={{ fontSize: "1.8rem", fontWeight: "700" }}>
+                <CountUp end={stat.value} duration={1.5} />
+              </div>
+              <div>{stat.label}</div>
+            </div>
+          ))}
         </div>
 
-        <div style={styles.card}>
-          <h3>Users per Organisation</h3>
-          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+          <div style={{ ...styles.card, flex: "1 1 400px" }}>
+            <h3>Users by Role</h3>
+            {pieData && <Pie data={pieData} />}
+          </div>
+
+          <div style={{ ...styles.card, flex: "1 1 400px" }}>
+            <h3>Users per Organisation</h3>
+            {barData && stats.organisations.length > 0 ? (
+              <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+            ) : (
+              <p style={{ color: "#666", textAlign: "center", padding: "20px" }}>No organisation data available</p>
+            )}
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <div style={styles.container}>
@@ -114,15 +190,34 @@ export default function AdminDashboard() {
         <div>
           <div style={styles.logo}>Admin Panel</div>
           <div style={styles.menu}>
-            <div style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} onClick={() => setPage("dashboard")}><FiHome /> Dashboard Overview</div>
-            <div style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} onClick={() => setPage("users")}><FiUsers /> User Management</div>
-            <div style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} onClick={() => setPage("tracking")}><FiActivity /> User Activity Tracking</div>
+            <div 
+              style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} 
+              onClick={() => setPage("dashboard")}
+            >
+              <FiHome /> Dashboard Overview
+            </div>
+            <div 
+              style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} 
+              onClick={() => setPage("users")}
+            >
+              <FiUsers /> User Management
+            </div>
+            <div 
+              style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} 
+              onClick={() => setPage("tracking")}
+            >
+              <FiActivity /> User Activity Tracking
+            </div>
           </div>
         </div>
 
         <div style={styles.bottomMenu}>
-          <div style={styles.menuItem}><FiSettings /> System Settings</div>
-          <div style={styles.menuItem} onClick={handleLogout}><FiLogOut /> Logout</div>
+          <div style={styles.menuItem}>
+            <FiSettings /> System Settings
+          </div>
+          <div style={styles.menuItem} onClick={handleLogout}>
+            <FiLogOut /> Logout
+          </div>
         </div>
       </aside>
 
@@ -133,15 +228,24 @@ export default function AdminDashboard() {
         {page === "users" && (
           <>
             <h1 style={styles.header}>User Management</h1>
-            <button style={styles.buttonPrimary} onClick={() => setShowAddUserModal(true)}><FiUserPlus /> Add User</button>
-            <div style={styles.card}><UserManagement /></div>
+            <button 
+              style={styles.buttonPrimary} 
+              onClick={() => setShowAddUserModal(true)}
+            >
+              <FiUserPlus /> Add User
+            </button>
+            <div style={styles.card}>
+              <UserManagement onUserUpdated={fetchDashboardStats} />
+            </div>
           </>
         )}
 
         {page === "tracking" && (
           <>
             <h1 style={styles.header}>User Activity Tracking</h1>
-            <div style={styles.card}><UserActivityTracking /></div>
+            <div style={styles.card}>
+              <UserActivityTracking />
+            </div>
           </>
         )}
       </main>
@@ -151,8 +255,20 @@ export default function AdminDashboard() {
         <div style={styles.modalOverlay} onClick={() => setShowAddUserModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginBottom: "20px" }}>Add New User</h2>
-            <AddUser />
-            <button style={{ padding: "10px 20px", background: "#ccc", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: 20 }} onClick={() => setShowAddUserModal(false)}>Close</button>
+            <AddUser onUserCreated={handleUserCreated} />
+            <button 
+              style={{ 
+                padding: "10px 20px", 
+                background: "#ccc", 
+                border: "none", 
+                borderRadius: "8px", 
+                cursor: "pointer", 
+                marginTop: 20 
+              }} 
+              onClick={() => setShowAddUserModal(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
