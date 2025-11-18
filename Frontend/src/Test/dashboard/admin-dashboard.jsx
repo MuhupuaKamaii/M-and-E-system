@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
-import UserActivityTracking from "../pages/UserActivityTracking";
-import { FiUsers, FiSettings, FiHome, FiLogOut, FiUserPlus, FiActivity } from "react-icons/fi";
+import { FiUsers, FiSettings, FiHome, FiLogOut, FiUserPlus } from "react-icons/fi";
 
 // Chart.js Imports
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
@@ -15,15 +14,10 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 const API_BASE_URL = "http://localhost:4000/api";
 
 export default function AdminDashboard() {
-<<<<<<< HEAD
-  const [page, setPage] = useState("dashboard");
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-=======
   const [activePage, setActivePage] = useState("dashboard");
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
   const navigate = useNavigate();
 
 
@@ -84,28 +78,9 @@ export default function AdminDashboard() {
     navigate("/login");
   };
 
-<<<<<<< HEAD
-
-  // Dummy stats data
-  const stats = {
-    totalUsers: 12,
-    admins: 2,
-    omaUsers: 5,
-    npcUsers: 5,
-    organisations: [
-      { name: "MAFWLR", users: 5 },
-      { name: "MIRT", users: 4 },
-      { name: "MIME", users: 3 },
-    ],
-  };
-
-  const pieData = {
-    labels: ["Admins", "OMA Users", "NPC Users"],
-=======
   // Prepare chart data
   const pieData = stats ? {
     labels: ["Admins", "NPC Users", "OMA Users"],
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
     datasets: [
       {
         data: [stats.admins, stats.npcUsers, stats.omaUsers],
@@ -115,11 +90,7 @@ export default function AdminDashboard() {
     ],
   } : null;
 
-<<<<<<< HEAD
-  const barData = {
-=======
   const barData = stats ? {
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
     labels: stats.organisations.map((org) => org.name),
     datasets: [
       {
@@ -143,11 +114,6 @@ export default function AdminDashboard() {
     header: { fontSize: "2rem", fontWeight: "700", marginBottom: "10px" },
     subtext: { opacity: 0.7, marginBottom: "25px", fontSize: "1rem" },
     card: { backgroundColor: "#fff", padding: "30px", borderRadius: "14px", boxShadow: "0 4px 18px rgba(0,0,0,0.12)", marginBottom: "30px" },
-<<<<<<< HEAD
-    buttonPrimary: { padding: "10px 20px", background: "#003366", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" },
-    modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
-    modalContent: { background: "#fff", padding: "30px", borderRadius: "12px", width: "600px", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 4px 18px rgba(0,0,0,0.3)" },
-=======
     statsContainer: { display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" },
     statCard: {
       flex: "1 1 200px",
@@ -166,7 +132,6 @@ export default function AdminDashboard() {
     chartCard: { flex: "1 1 400px", background: "#fff", padding: "20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
     loadingMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#666" },
     errorMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#dc2626", backgroundColor: "#fee", borderRadius: "8px" },
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
   };
 
   const renderDashboardOverview = () => {
@@ -174,16 +139,6 @@ export default function AdminDashboard() {
       return <div style={styles.loadingMsg}>Loading dashboard data...</div>;
     }
 
-<<<<<<< HEAD
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px" }}>
-        {[{ label: "Total Users", value: stats.totalUsers },
-        { label: "Admins", value: stats.admins },
-        { label: "OMA Users", value: stats.omaUsers },
-        { label: "NPC Users", value: stats.npcUsers }].map((stat, idx) => (
-          <div key={idx} style={{ background: "#0d1b2a", color: "#fff", padding: "25px", borderRadius: "12px", flex: "1 1 200px" }}>
-            <div style={{ fontSize: "1.8rem", fontWeight: "700" }}><CountUp end={stat.value} duration={1.5} /></div>
-            <div>{stat.label}</div>
-=======
     if (error) {
       return <div style={styles.errorMsg}>Error: {error}</div>;
     }
@@ -224,24 +179,8 @@ export default function AdminDashboard() {
           <div style={styles.chartCard}>
             <h3 style={{ marginBottom: "10px" }}>Users by Role</h3>
             {pieData && <Pie data={pieData} />}
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
           </div>
 
-<<<<<<< HEAD
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        <div style={styles.card}>
-          <h3>Users by Role</h3>
-          <Pie data={pieData} />
-        </div>
-
-        <div style={styles.card}>
-          <h3>Users per Organisation</h3>
-          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-        </div>
-      </div>
-    </>
-  );
-=======
           <div style={styles.chartCard}>
             <h3 style={{ marginBottom: "10px" }}>Users per Organisation</h3>
             {barData && <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />}
@@ -250,7 +189,6 @@ export default function AdminDashboard() {
       </>
     );
   };
->>>>>>> 2247e7b221ac8fbbdc31124988de54c2a8ce9aa8
 
   return (
     <div style={styles.container}>
@@ -259,48 +197,76 @@ export default function AdminDashboard() {
         <div>
           <div style={styles.logo}>Admin Panel</div>
           <div style={styles.menu}>
-            <div style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} onClick={() => setPage("dashboard")}><FiHome /> Dashboard Overview</div>
-            <div style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} onClick={() => setPage("users")}><FiUsers /> User Management</div>
-            <div style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} onClick={() => setPage("tracking")}><FiActivity /> User Activity Tracking</div>
+            <div
+              style={{ ...styles.menuItem, ...(activePage === "dashboard" ? styles.activeMenuItem : {}) }}
+              onClick={() => setActivePage("dashboard")}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1a273d")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = activePage === "dashboard" ? "#1b2a41" : "transparent")}
+            >
+              <FiHome /> Dashboard Overview
+            </div>
+
+            <div
+              style={{ ...styles.menuItem, ...(activePage === "addUser" ? styles.activeMenuItem : {}) }}
+              onClick={() => setActivePage("addUser")}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1a273d")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = activePage === "addUser" ? "#1b2a41" : "transparent")}
+            >
+              <FiUserPlus /> Add User
+            </div>
+
+            <div
+              style={{ ...styles.menuItem, ...(activePage === "users" ? styles.activeMenuItem : {}) }}
+              onClick={() => setActivePage("users")}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1a273d")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = activePage === "users" ? "#1b2a41" : "transparent")}
+            >
+              <FiUsers /> User Management
+            </div>
           </div>
         </div>
 
         <div style={styles.bottomMenu}>
-          <div style={styles.menuItem}><FiSettings /> System Settings</div>
-          <div style={styles.menuItem} onClick={handleLogout}><FiLogOut /> Logout</div>
+          <div
+            style={styles.menuItem}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1a273d")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <FiSettings /> System Settings
+          </div>
+
+          <div
+            style={styles.menuItem}
+            onClick={handleLogout}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1a273d")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <FiLogOut /> Logout
+          </div>
         </div>
       </aside>
 
-      {/* Main */}
+      {/* Main Content */}
       <main style={styles.main}>
-        {page === "dashboard" && renderDashboardOverview()}
-
-        {page === "users" && (
+        {activePage === "dashboard" && renderDashboardOverview()}
+        {activePage === "addUser" && (
           <>
-            <h1 style={styles.header}>User Management</h1>
-            <button style={styles.buttonPrimary} onClick={() => setShowAddUserModal(true)}><FiUserPlus /> Add User</button>
-            <div style={styles.card}><UserManagement /></div>
+            <h1 style={styles.header}>Add New User</h1>
+            <div style={styles.card}>
+              <AddUser />
+            </div>
           </>
         )}
-
-        {page === "tracking" && (
+        {activePage === "users" && (
           <>
-            <h1 style={styles.header}>User Activity Tracking</h1>
-            <div style={styles.card}><UserActivityTracking /></div>
+            <h1 style={styles.header}>User Management</h1>
+            <p style={styles.subtext}>Search, edit, or remove platform users efficiently.</p>
+            <div style={styles.card}>
+              <UserManagement />
+            </div>
           </>
         )}
       </main>
-
-      {/* Add User Modal */}
-      {showAddUserModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowAddUserModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginBottom: "20px" }}>Add New User</h2>
-            <AddUser />
-            <button style={{ padding: "10px 20px", background: "#ccc", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: 20 }} onClick={() => setShowAddUserModal(false)}>Close</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
