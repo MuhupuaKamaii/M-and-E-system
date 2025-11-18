@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { FiEdit, FiTrash2, FiSearch, FiX, FiPlus } from "react-icons/fi";
 
+const API_BASE_URL = "http://localhost:4000/api";
+
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,6 +16,14 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchOrganisations();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const token = localStorage.getItem("token");
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
@@ -33,6 +43,26 @@ export default function UserManagement() {
       setOrganisations(data.organisations || []);
     } catch (err) {
       console.error('Failed to fetch organisations', err);
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/dashboard/users`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      setUsers(data.users || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +127,63 @@ export default function UserManagement() {
         setShowCreateModal(false);
       })
       .catch(err => console.error('Create failed', err));
+  const handleDeleteClick = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Failed to delete user");
+        return;
+      }
+
+      // Remove user from local state
+      setUsers(users.filter((u) => u.id !== userId));
+      alert("User deleted successfully");
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      alert("Error deleting user");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/users/${editUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: editUser.full_name,
+          username: editUser.username,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Failed to update user");
+        return;
+      }
+
+      // Update user in local state
+      setUsers(users.map((u) => (u.id === editUser.id ? editUser : u)));
+      setShowModal(false);
+      setEditUser(null);
+      alert("User updated successfully");
+    } catch (err) {
+      console.error("Error updating user:", err);
+      alert("Error updating user");
+    }
   };
 
   const styles = {
@@ -118,7 +205,7 @@ export default function UserManagement() {
     table: { width: "100%", borderCollapse: "collapse", minWidth: "700px" },
     th: { textAlign: "left", padding: "14px 18px", backgroundColor: "#0d1b2a", color: "#fff", fontWeight: 600, fontSize: "0.95rem" },
     td: { padding: "12px 18px", borderBottom: "1px solid #eee", fontSize: "0.95rem", color: "#1a1a1a" },
-    actionBtn: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "6px 12px", fontSize: "0.85rem", borderRadius: "5px", border: "none", cursor: "pointer", transition: "0.2s" },
+    actionBtn: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "6px 12px", fontSize: "0.85rem", borderRadius: "5px", border: "none", cursor: "pointer", transition: "0.2s", marginRight: "8px" },
     editBtn: { backgroundColor: "#ffca28", color: "#000" },
     deleteBtn: { backgroundColor: "#ff4d4f", color: "#fff" },
 
@@ -147,7 +234,17 @@ export default function UserManagement() {
     modalInput: { width: "100%", padding: "8px 10px", marginBottom: "12px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "1rem" },
     modalClose: { position: "absolute", top: "12px", right: "12px", cursor: "pointer", fontSize: "1.2rem", color: "#333" },
     modalSaveBtn: { padding: "10px 20px", backgroundColor: "#0d1b2a", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "1rem" },
+    loadingMsg: { textAlign: "center", padding: "40px", fontSize: "1.2rem", color: "#666" },
+    errorMsg: { textAlign: "center", padding: "20px", fontSize: "1rem", color: "#dc2626", backgroundColor: "#fee", borderRadius: "8px" },
   };
+
+  if (loading) {
+    return <div style={styles.loadingMsg}>Loading users...</div>;
+  }
+
+  if (error) {
+    return <div style={styles.errorMsg}>Error: {error}</div>;
+  }
 
   return (
     <div style={styles.container}>
@@ -155,6 +252,7 @@ export default function UserManagement() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={styles.searchWrapper}>
+      <div style={styles.searchWrapper}>
         <FiSearch size={18} color="#0d1b2a" />
         <input
           type="text"
@@ -179,22 +277,30 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
-                <td style={styles.td}>{user.full_name}</td>
-                <td style={styles.td}>{user.username}</td>
-                <td style={styles.td}>{user.role}</td>
-                <td style={styles.td}>{user.organisation}</td>
-                <td style={styles.td}>
-                  <button style={{ ...styles.actionBtn, ...styles.editBtn }} onClick={() => handleEditClick(user)}>
-                    <FiEdit /> Edit
-                  </button>
-                  <button style={{ ...styles.actionBtn, ...styles.deleteBtn }} onClick={() => handleDeleteClick(user.id)}>
-                    <FiTrash2 /> Delete
-                  </button>
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ ...styles.td, textAlign: "center", padding: "30px" }}>
+                  No users found
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id}>
+                  <td style={styles.td}>{user.full_name}</td>
+                  <td style={styles.td}>{user.username}</td>
+                  <td style={styles.td}>{user.role}</td>
+                  <td style={styles.td}>{user.organisation}</td>
+                  <td style={styles.td}>
+                    <button style={{ ...styles.actionBtn, ...styles.editBtn }} onClick={() => handleEditClick(user)}>
+                      <FiEdit /> Edit
+                    </button>
+                    <button style={{ ...styles.actionBtn, ...styles.deleteBtn }} onClick={() => handleDeleteClick(user.id)}>
+                      <FiTrash2 /> Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -230,6 +336,12 @@ export default function UserManagement() {
               {organisations.map(o => <option key={o.organisation_id || o.id} value={o.name}>{o.name}</option>)}
             </select>
             <button style={styles.modalSaveBtn} onClick={handleSaveEdit}>Save Changes</button>
+            <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "12px" }}>
+              Role: <strong>{editUser.role}</strong> | Organisation: <strong>{editUser.organisation}</strong>
+            </p>
+            <button style={styles.modalSaveBtn} onClick={handleSaveEdit}>
+              Save Changes
+            </button>
           </div>
         </div>
       )}
@@ -281,4 +393,5 @@ function CreateForm({ organisations, onCreate, onCancel }){
       </div>
     </div>
   )
+}
 }
