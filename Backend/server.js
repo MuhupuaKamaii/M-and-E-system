@@ -6,6 +6,8 @@ const authRoutes = require('./routes/authRoutes'); // Auth routes
 const adminRoutes = require('./routes/adminRoutes'); // Optional admin routes
 const focusAreaRoutes = require("./routes/focusAreaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const lookupRoutes = require("./routes/lookupRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes); // Optional, if you have admin routes
 app.use("/api/focus-areas", focusAreaRoutes);
 app.use("/api/reports", reportRoutes);
+app.use('/api/lookups', lookupRoutes);
+app.use('/api/projects', projectRoutes);
 
 
 // Start server
