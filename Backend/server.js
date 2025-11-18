@@ -7,6 +7,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const focusAreaRoutes = require("./routes/focusAreaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes"); // ✅ NEW
+const lookupRoutes = require("./routes/lookupRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
 
@@ -25,6 +27,9 @@ app.use('/api/admin', adminRoutes);
 app.use("/api/focus-areas", focusAreaRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes); // ✅ NEW
+app.use('/api/lookups', lookupRoutes);
+app.use('/api/projects', projectRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 4000;
