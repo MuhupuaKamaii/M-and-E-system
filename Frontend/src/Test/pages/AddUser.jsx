@@ -10,10 +10,9 @@ export default function AddUser() {
     focus_area_id: ""
   });
 
-  const [generatedPassword, setGeneratedPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [messageData, setMessageData] = useState({ msg: "", type: "" });
   const [focusAreas, setFocusAreas] = useState([]);
-  const [organisations, setOrganisations] = useState([
+  const [organisations] = useState([
     { id: 1, name: "MAFWLR" },
     { id: 2, name: "MIRT" },
     { id: 3, name: "MIME" }
@@ -24,35 +23,38 @@ export default function AddUser() {
   /* -----------------------------------------------------------
       Fetch Focus Areas Dynamically
   ------------------------------------------------------------*/
-  // useEffect(() => {
-  //   if (form.role_id === "3" && form.organisation_id) {
-  //     fetch(`http://localhost:4000/api/focus-areas`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     })
-  //       .then(res => res.json())
-  //       .then(data => {
-  //         const filtered = data.focusAreas.filter(
-  //           fa => fa.organisation_id === parseInt(form.organisation_id)
-  //         );
-  //         setFocusAreas(filtered);
-  //       })
-  //       .catch(err => {
-  //         console.error(err);
-  //         setFocusAreas([]);
-  //       });
-  //   } else {
-  //     setFocusAreas([]);
-  //     setForm(prev => ({ ...prev, focus_area_id: "" }));
-  //   }
-  // }, [form.role_id, form.organisation_id, token]);
+  useEffect(() => {
+    if (form.role_id === "3" && form.organisation_id) {
+      const fetchFocusAreas = async () => {
+        try {
+          const res = await fetch(
+            `http://localhost:4000/api/focus-areas?org=${form.organisation_id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await res.json();
+          setFocusAreas(data.focusAreas || []);
+        } catch (err) {
+          console.error(err);
+          setFocusAreas([]);
+        }
+      };
+      fetchFocusAreas();
+    } else {
+      setFocusAreas([]);
+      setForm(prev => ({ ...prev, focus_area_id: "" }));
+    }
+  }, [form.role_id, form.organisation_id, token]);
 
   /* -----------------------------------------------------------
-      Generate Password
+      Generate Strong Password
   ------------------------------------------------------------*/
   const generatePassword = () => {
-    const pwd = Math.random().toString(36).slice(-8);
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    let pwd = "";
+    for (let i = 0; i < 12; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     setForm({ ...form, password: pwd });
-    setGeneratedPassword(pwd);
   };
 
   /* -----------------------------------------------------------
@@ -60,7 +62,7 @@ export default function AddUser() {
   ------------------------------------------------------------*/
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setMessageData({ msg: "", type: "" });
 
     const payload = {
       full_name: form.full_name,
@@ -71,9 +73,9 @@ export default function AddUser() {
       focus_area_id: form.focus_area_id ? parseInt(form.focus_area_id) : null,
     };
 
-    // Validations
-    if (payload.role_id === 3 && !payload.organisation_id ) {
-      setMessage("Organisation and Focus Area are required for OMA role");
+    // Validation for OMA
+    if (payload.role_id === 3 && (!payload.organisation_id || !payload.focus_area_id)) {
+      setMessageData({ msg: "Organisation and Focus Area are required for OMA role", type: "error" });
       return;
     }
 
@@ -90,11 +92,11 @@ export default function AddUser() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Error creating user");
+        setMessageData({ msg: data.message || "Error creating user", type: "error" });
         return;
       }
 
-      setMessage(`User created! Temporary Password: ${data.plain_password}`);
+      setMessageData({ msg: `User created! Temporary Password: ${data.plain_password}`, type: "success" });
 
       setForm({
         full_name: "",
@@ -104,15 +106,15 @@ export default function AddUser() {
         organisation_id: "",
         focus_area_id: ""
       });
-      setGeneratedPassword("");
+
     } catch (err) {
       console.error(err);
-      setMessage("Server error while creating user");
+      setMessageData({ msg: "Server error while creating user", type: "error" });
     }
   };
 
   /* -----------------------------------------------------------
-      INLINE INDUSTRY-LEVEL UI STYLES
+      Inline Styles
   ------------------------------------------------------------*/
   const styles = {
     wrapper: {
@@ -170,6 +172,8 @@ export default function AddUser() {
       fontSize: "1rem",
       cursor: "pointer",
       marginTop: "10px",
+      opacity: 1,
+      transition: "opacity 0.2s ease",
     },
     label: {
       fontSize: "0.95rem",
@@ -183,11 +187,22 @@ export default function AddUser() {
     passwordRow: { display: "flex", alignItems: "center" },
   };
 
+  // Disable submit if required fields are missing
+  const isSubmitDisabled =
+    !form.full_name ||
+    !form.username ||
+    !form.password ||
+    (form.role_id === "3" && (!form.organisation_id || !form.focus_area_id));
+
   return (
     <div style={styles.wrapper}>
       <h2 style={styles.title}>Add New System User</h2>
 
-      {message && <p style={message.includes("error") ? styles.error : styles.success}>{message}</p>}
+      {messageData.msg && (
+        <p style={messageData.type === "error" ? styles.error : styles.success}>
+          {messageData.msg}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
 
@@ -224,33 +239,43 @@ export default function AddUser() {
           <option value="3">OMA</option>
         </select>
 
-        {/* ORGANISATION for OMA */}
+        {/* Organisation for OMA */}
         {form.role_id === "3" && (
           <>
             <label style={styles.label}>Organisation (OMA)</label>
             <select
               style={styles.select}
               value={form.organisation_id}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  organisation_id: e.target.value,
-                  focus_area_id: "",
-                })
-              }
+              onChange={(e) => setForm({ ...form, organisation_id: e.target.value, focus_area_id: "" })}
               required
             >
               <option value="">Select organisation</option>
               {organisations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
+                <option key={org.id} value={org.id}>{org.name}</option>
               ))}
             </select>
+
+            {/* Focus Areas */}
+            {focusAreas.length > 0 && (
+              <>
+                <label style={styles.label}>Focus Area</label>
+                <select
+                  style={styles.select}
+                  value={form.focus_area_id}
+                  onChange={(e) => setForm({ ...form, focus_area_id: e.target.value })}
+                  required
+                >
+                  <option value="">Select focus area</option>
+                  {focusAreas.map(fa => (
+                    <option key={fa.id} value={fa.id}>{fa.name}</option>
+                  ))}
+                </select>
+              </>
+            )}
           </>
         )}
 
-        {/* PASSWORD */}
+        {/* Password */}
         <label style={styles.label}>Password</label>
         <div style={styles.passwordRow}>
           <input
@@ -260,14 +285,13 @@ export default function AddUser() {
             placeholder="Enter or generate password"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-
           <button type="button" style={styles.generateBtn} onClick={generatePassword}>
             Generate
           </button>
         </div>
         <div style={{ marginBottom: "20px" }} />
 
-        <button type="submit" style={styles.submitBtn}>
+        <button type="submit" style={{ ...styles.submitBtn, opacity: isSubmitDisabled ? 0.6 : 1 }} disabled={isSubmitDisabled}>
           Create User
         </button>
       </form>
