@@ -253,7 +253,7 @@ export default function ReportsPage() {
             <h3>No analytics yet</h3>
             <p>There are no reports aggregated for the selected filters. Once reports are submitted, charts and KPIs will appear here.</p>
             <div style={{ marginTop: 12 }}>
-              <button className="btn btn-ghost" onClick={fetchAnalytics}>Refresh</button>
+              <button className="btn btn-ghost" onClick={() => { setLoading(true); setTimeout(() => { const data = generateDummyAnalytics(groupBy); setAnalytics(data); setLoading(false); }, 600); }}>Refresh</button>
             </div>
           </div>
         </div>
