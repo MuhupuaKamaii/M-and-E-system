@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
 import UserActivityTracking from "../pages/UserActivityTracking";
+import ReportsPage from "../pages/ReportsPage";
 import { FiUsers, FiSettings, FiHome, FiLogOut, FiUserPlus, FiActivity } from "react-icons/fi";
 
 // Chart.js Imports
@@ -16,6 +17,20 @@ export default function AdminDashboard() {
   const [page, setPage] = useState("dashboard");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const navigate = useNavigate();
+
+  // Read URL query params on mount so external links can open specific dashboard pages
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const qPage = params.get("page");
+      const qUserId = params.get("userId");
+      if (qPage === "tracking" || qUserId) {
+        setPage("tracking");
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -117,6 +132,7 @@ export default function AdminDashboard() {
             <div style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} onClick={() => setPage("dashboard")}><FiHome /> Dashboard Overview</div>
             <div style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} onClick={() => setPage("users")}><FiUsers /> User Management</div>
             <div style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} onClick={() => setPage("tracking")}><FiActivity /> User Activity Tracking</div>
+            <div style={{ ...styles.menuItem, ...(page === "reports" ? styles.activeMenuItem : {}) }} onClick={() => setPage("reports")}><FiSettings /> Reports</div>
           </div>
         </div>
 
@@ -142,6 +158,13 @@ export default function AdminDashboard() {
           <>
             <h1 style={styles.header}>User Activity Tracking</h1>
             <div style={styles.card}><UserActivityTracking /></div>
+          </>
+        )}
+
+        {page === "reports" && (
+          <>
+            <h1 style={styles.header}>Reports</h1>
+            <div style={styles.card}><ReportsPage /></div>
           </>
         )}
       </main>
