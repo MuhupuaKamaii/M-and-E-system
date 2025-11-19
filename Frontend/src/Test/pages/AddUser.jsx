@@ -11,39 +11,26 @@ export default function AddUser() {
 
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [focusAreas, setFocusAreas] = useState([]);
-  const [organisations, setOrganisations] = useState([
-    { id: 1, name: "MAFWLR" },
-    { id: 2, name: "MIRT" },
-    { id: 3, name: "MIME" }
-  ]);
+  const [organisations, setOrganisations] = useState([]);
 
   const token = localStorage.getItem("token");
 
-  /* -----------------------------------------------------------
-      Fetch Focus Areas Dynamically
-  ------------------------------------------------------------*/
-  // useEffect(() => {
-  //   if (form.role_id === "3" && form.organisation_id) {
-  //     fetch(`http://localhost:4000/api/focus-areas`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     })
-  //       .then(res => res.json())
-  //       .then(data => {
-  //         const filtered = data.focusAreas.filter(
-  //           fa => fa.organisation_id === parseInt(form.organisation_id)
-  //         );
-  //         setFocusAreas(filtered);
-  //       })
-  //       .catch(err => {
-  //         console.error(err);
-  //         setFocusAreas([]);
-  //       });
-  //   } else {
-  //     setFocusAreas([]);
-  //     setForm(prev => ({ ...prev, focus_area_id: "" }));
-  //   }
-  // }, [form.role_id, form.organisation_id, token]);
+  // Fetch organisations for the organisation dropdown
+  useEffect(() => {
+    const fetchOrganisations = async () => {
+      try {
+        const res = await fetch('/api/lookups/organisations');
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const data = await res.json();
+        setOrganisations(data.organisations || []);
+      } catch (err) {
+        console.error('Error fetching organisations:', err);
+        setOrganisations([]);
+      }
+    };
+
+    fetchOrganisations();
+  }, []);
 
   /* -----------------------------------------------------------
       Generate Password
@@ -67,12 +54,11 @@ export default function AddUser() {
       password: form.password,
       role_id: parseInt(form.role_id),
       organisation_id: form.organisation_id ? parseInt(form.organisation_id) : null,
-      focus_area_id: form.focus_area_id ? parseInt(form.focus_area_id) : null,
     };
 
     // Validations
     if (payload.role_id === 3 && !payload.organisation_id) {
-      setMessage("Organisation and Focus Area are required for OMA role");
+      setMessage("Organisation is required for OMA role");
       return;
     }
 
@@ -229,13 +215,7 @@ export default function AddUser() {
             <select
               style={styles.select}
               value={form.organisation_id}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  organisation_id: e.target.value,
-                  focus_area_id: "",
-                })
-              }
+              onChange={(e) => setForm({ ...form, organisation_id: e.target.value })}
               required
             >
               <option value="">Select organisation</option>

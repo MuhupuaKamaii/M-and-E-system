@@ -208,7 +208,7 @@ export default function UserManagement() {
 
   return (
     <div style={styles.container}>
-      
+
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <div style={styles.searchWrapper}>
@@ -222,7 +222,7 @@ export default function UserManagement() {
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display:'inline-flex', gap:8, alignItems:'center', padding:'8px 12px', borderRadius:8, background:'#0d1b2a', color:'#fff', border:'none', cursor:'pointer' }}><FiPlus /> Add User</button>
+          {/* <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer' }}><FiPlus /> Add User</button> */}
         </div>
       </div>
 
@@ -273,12 +273,12 @@ export default function UserManagement() {
         </table>
       </div>
 
-        {/* Toast */}
-        {toast.show && (
-          <div className={`toast ${toast.type === 'error' ? 'toast-error' : 'toast-success'}`} role="status">
-            {toast.message}
-          </div>
-        )}
+      {/* Toast */}
+      {toast.show && (
+        <div className={`toast ${toast.type === 'error' ? 'toast-error' : 'toast-success'}`} role="status">
+          {toast.message}
+        </div>
+      )}
 
       {/* Create Modal */}
       {showCreateModal && (
@@ -346,7 +346,7 @@ export default function UserManagement() {
   );
 }
 
-function CreateForm({ organisations, onCreate, onCancel }){
+function CreateForm({ organisations, onCreate, onCancel }) {
   const [form, setForm] = useState({
     full_name: "",
     username: "",
@@ -408,7 +408,7 @@ function CreateForm({ organisations, onCreate, onCancel }){
 
       setForm({ full_name: "", username: "", password: "", role_id: "", organisation_id: "", focus_area_id: "" });
       setGeneratedPassword("");
-      try { onCreate && onCreate(); } catch (e) {}
+      try { onCreate && onCreate(); } catch (e) { }
     } catch (err) {
       console.error(err);
       setMessage("Server error while creating user");

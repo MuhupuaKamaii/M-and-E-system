@@ -175,7 +175,7 @@ export default function AdminDashboard() {
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginBottom: "20px" }}>Add New User</h2>
             <AddUser />
-            <button style={{ padding: "10px 20px", background: "#ccc", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: 20 }} onClick={() => setShowAddUserModal(false)}>Close</button>
+            <button style={{ padding: "10px 20px", background: "#484e48ab", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: 20 }} onClick={() => setShowAddUserModal(false)}>Close</button>
           </div>
         </div>
       )}
