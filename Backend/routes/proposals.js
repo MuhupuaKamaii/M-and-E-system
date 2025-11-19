@@ -1,7 +1,12 @@
+// routes/proposals.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const { propalsController } = require('../controllers/ProposalsController');
-router.use(authMiddleware);
-router.get('/makeproposals', propalsController.getProposalsdata);
+const { authenticate } = require('../middleware/authMiddleware'); // Fixed import
+const { proposalsController } = require('../controllers/ProposalsController');
+
+// Use authenticate middleware for all routes in this file
+router.use(authenticate);
+
+router.get('/makeproposals', proposalsController.getProposalsdata);
+
 module.exports = router;

@@ -1,4 +1,5 @@
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import { 
   FiHome, 
@@ -176,22 +177,22 @@ const OMADashboard = () => {
         </div>
 
         <nav className="sidebar-nav">
-          <a href="/dashboard" className="nav-item active">
+          <Link to="/omaDashboard" className="nav-item active">
             <FiHome className="nav-icon" />
             Dashboard
-          </a>
-          <a href="/forms" className="nav-item">
+          </Link>
+          <Link to="/project-submission" className="nav-item">
             <FiFileText className="nav-icon" />
-            Forms
-          </a>
-          <a href="/reports" className="nav-item">
+            Planning
+          </Link>
+          <Link to="/reports" className="nav-item">
             <FiFileText className="nav-icon" />
             Reports
-          </a>
-          <a href="/analytics" className="nav-item">
+          </Link>
+          <Link to="/analytics" className="nav-item">
             <FiBarChart2 className="nav-icon" />
             Analytics
-          </a>
+          </Link>
         </nav>
 
         <div className="sidebar-footer">

@@ -243,8 +243,20 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>Loading analytics…</div>
+      {/* if there's no real data and we're not loading, keep the main area blank */}
+      {!loading && (!analytics || analytics.length === 0) ? (
+        <div className="empty-state">
+          <div className="empty-card">
+            <div className="emoji" aria-hidden="true">
+              
+            </div>
+            <h3>No analytics yet</h3>
+            <p>There are no reports aggregated for the selected filters. Once reports are submitted, charts and KPIs will appear here.</p>
+            <div style={{ marginTop: 12 }}>
+              <button className="btn btn-ghost" onClick={fetchAnalytics}>Refresh</button>
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           {/* KPIs */}

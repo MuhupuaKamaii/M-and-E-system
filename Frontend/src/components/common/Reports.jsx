@@ -364,11 +364,11 @@ const Reports = () => {
         </div>
 
         <nav className="sidebar-nav">
-          <a href="/dashboard" className="nav-item">
+          <a href="/omaDashboard" className="nav-item">
             <FiHome className="nav-icon" />
             Dashboard
           </a>
-          <a href="/forms" className="nav-item">
+          <a href="/project-submission" className="nav-item">
             <FiFileText className="nav-icon" />
             Planning
           </a>

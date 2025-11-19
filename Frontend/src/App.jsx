@@ -11,7 +11,8 @@ import NpcDashboard from "./pages/NpcDashboard";
 import NpcDashboardPro from "./pages/NpcDashboardPro";
 import AtRiskOmas from "./pages/AtRiskOmas";
 import OMADashboard from "./Test/dashboard/OMADashboard";
-import Reports from "./components/common/Reports.jsx";  
+import Reports from "./components/common/Reports.jsx";
+import ProjectSubmissionForm from "./Test/pages/ProjectSubmissionForm";
 import { AuthProvider } from './contexts/AuthContext.jsx';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/test-form" element={<TestForm />} />
           <Route path="/omaReports" element={<Reports />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/project-submission" element={<ProjectSubmissionForm />} />
           <Route
             path="/addUserReport"
             element={

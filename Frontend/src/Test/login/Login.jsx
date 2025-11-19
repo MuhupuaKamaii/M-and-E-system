@@ -125,12 +125,7 @@ function Login() {
           <div className="divider"><span>or continue with</span></div>
 
           <div className="socials">
-            <button type="button" className="btn-google" onClick={() => alert('Google login placeholder')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.35 11.1h-9.18v2.92h5.35c-.23 1.42-1.48 4.17-5.35 4.17-3.22 0-5.85-2.66-5.85-5.93s2.63-5.93 5.85-5.93c1.83 0 3.06.78 3.76 1.45l2.57-2.49C17.48 3.1 15.58 2 12.17 2 7.78 2 4 5.58 4 10c0 4.39 3.78 8 8.17 8 4.71 0 7.69-3.31 7.69-7.9 0-.53-.06-.95-.51-1z" fill="#4285F4"/>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
+            <button type="button" className="btn-google" onClick={() => alert('Google login placeholder')}>            </button>
           </div>
 
           {error && <div id="login-error" className="error">{error}</div>}

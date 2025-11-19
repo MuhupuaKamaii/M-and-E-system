@@ -1,16 +1,16 @@
+// controllers/ProposalsController.js
 const { createClient } = require('@supabase/supabase-js');
-const jwt = require("jsonwebtoken");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-async function getProposalsdata(req, res)  {
+
+async function getProposalsdata(req, res) {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const userId = decoded.user_id;
+    console.log('getProposalsdata called, user:', req.user); // Debug log
     
-    console.log(userId)// From auth middleware
+    const userId = req.user.user_id; // From auth middleware
     
+    console.log('User ID:', userId);
+
     // Get user's organization
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -19,10 +19,12 @@ async function getProposalsdata(req, res)  {
       .single();
 
     if (userError) {
+      console.log('Error fetching user data:', userError);
       return res.status(500).json({ message: 'Error fetching user data', error: userError.message });
     }
 
     const organisationId = userData.organisation_id;
+    console.log('Organisation ID:', organisationId);
 
     // Fetch pillars (not organization-specific, but needed for hierarchy)
     const { data: pillars, error: pillarError } = await supabase
@@ -31,6 +33,7 @@ async function getProposalsdata(req, res)  {
       .order('name');
 
     if (pillarError) {
+      console.log('Error fetching pillars:', pillarError);
       return res.status(500).json({ message: 'Error fetching pillars', error: pillarError.message });
     }
 
@@ -41,6 +44,7 @@ async function getProposalsdata(req, res)  {
       .order('name');
 
     if (themeError) {
+      console.log('Error fetching themes:', themeError);
       return res.status(500).json({ message: 'Error fetching themes', error: themeError.message });
     }
 
@@ -52,6 +56,7 @@ async function getProposalsdata(req, res)  {
       .order('name');
 
     if (focusAreaError) {
+      console.log('Error fetching focus areas:', focusAreaError);
       return res.status(500).json({ message: 'Error fetching focus areas', error: focusAreaError.message });
     }
 
@@ -66,6 +71,7 @@ async function getProposalsdata(req, res)  {
       .order('name');
 
     if (programmeError) {
+      console.log('Error fetching programmes:', programmeError);
       return res.status(500).json({ message: 'Error fetching programmes', error: programmeError.message });
     }
 
@@ -80,8 +86,18 @@ async function getProposalsdata(req, res)  {
       .order('name');
 
     if (strategyError) {
+      console.log('Error fetching strategies:', strategyError);
       return res.status(500).json({ message: 'Error fetching strategies', error: strategyError.message });
     }
+
+    console.log('Data fetched successfully:', {
+      pillars: pillars.length,
+      themes: themes.length,
+      focusAreas: focusAreas.length,
+      programmes: programmes.length,
+      strategies: strategies.length
+    });
+
     res.json({
       pillars,
       themes,
@@ -92,13 +108,13 @@ async function getProposalsdata(req, res)  {
     });
 
   } catch (error) {
-    console.error('Error in getFormData:', error);
+    console.error('Error in getProposalsdata:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-};
+}
 
 module.exports = {
-  propalsController: {
+  proposalsController: {
     getProposalsdata
   }
 };

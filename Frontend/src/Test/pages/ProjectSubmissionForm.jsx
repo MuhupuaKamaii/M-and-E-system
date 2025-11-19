@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Loader2, FileText, Eye } from 'lucide-react';
+import OmaSideNav from '../../components/layout/OmaSideNav';
+import '../pages/ProjectSubmissionForm.css';
 
 const ProjectSubmissionForm = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [submittedProjects, setSubmittedProjects] = useState([]);
+  const navigate = useNavigate();
   
   // Form data
   const [formData, setFormData] = useState({
@@ -32,25 +37,57 @@ const ProjectSubmissionForm = () => {
   const [filteredProgrammes, setFilteredProgrammes] = useState([]);
   const [filteredStrategies, setFilteredStrategies] = useState([]);
 
-  // API base URL - adjust as needed
+  // API base URL
   const API_BASE_URL = 'http://localhost:4000/api';
 
-  // Fetch initial data
+  // Check authentication on component mount
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No authentication token found. Please log in.');
+      setLoading(false);
+      return;
+    }
     fetchInitialData();
+    fetchSubmittedProjects();
   }, []);
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      console.log('Fetching data with token:', token.substring(0, 20) + '...');
+
       const response = await fetch(`${API_BASE_URL}/proposals/makeproposals`, {
         method: "GET",
-        headers: { Authorization:`Bearer ${localStorage.getItem('token')}`}
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
-      if (!response.ok) throw new Error('Failed to fetch form data');
+      console.log('Response status:', response.status);
+      
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        throw new Error('Your session has expired. Please log in again.');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} - ${response.statusText}`);
+      }
       
       const data = await response.json();
+      console.log('Received data:', data);
+      
       setPillars(data.pillars || []);
       setThemes(data.themes || []);
       setFocusAreas(data.focusAreas || []);
@@ -59,8 +96,37 @@ const ProjectSubmissionForm = () => {
       
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch error:', err);
+      setError(err.message || 'Failed to load form data. Please check if the backend server is running.');
       setLoading(false);
+    }
+  };
+
+  const fetchSubmittedProjects = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/projects/my-projects`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSubmittedProjects(data.projects || []);
+      }
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+    }
+  };
+
+  // Handle authentication errors by redirecting to login
+  const handleAuthError = (message) => {
+    if (message.includes('session') || message.includes('token') || message.includes('log in')) {
+      localStorage.removeItem('token');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     }
   };
 
@@ -147,29 +213,75 @@ const ProjectSubmissionForm = () => {
     }
   };
 
+  // Handle navigation to quarterly report
+  const handleViewReport = (project) => {
+    navigate('/quarterly-report', { 
+      state: { 
+        project,
+        programme: programmes.find(p => p.id === project.programme_id),
+        focusArea: focusAreas.find(f => f.id === project.focus_area_id),
+        theme: themes.find(t => t.id === project.theme_id),
+        pillar: pillars.find(p => p.id === project.pillar_id)
+      }
+    });
+  };
+
+  // Handle form submission
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Validate required fields
+      const requiredFields = [
+        'start_date', 'expected_end_date', 'pillar_id', 'theme_id', 
+        'focus_area_id', 'programme_id', 'project_title'
+      ];
+
+      const missingFields = requiredFields.filter(field => !formData[field]);
+      if (missingFields.length > 0) {
+        throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      }
+
+      // Prepare data for submission
+      const submissionData = {
+        ...formData,
+        budget: formData.budget === '' ? null : parseFloat(formData.budget),
+        pillar_id: parseInt(formData.pillar_id),
+        theme_id: parseInt(formData.theme_id),
+        focus_area_id: parseInt(formData.focus_area_id),
+        programme_id: parseInt(formData.programme_id),
+        strategy_id: formData.strategy_id ? parseInt(formData.strategy_id) : null
+      };
+
+      console.log('Submitting data:', submissionData);
+
       const response = await fetch(`${API_BASE_URL}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submissionData)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit project');
+        console.error('Server error response:', errorData);
+        throw new Error(errorData.message || `Failed to submit project: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Submission successful:', result);
+      
       alert('Project submitted successfully!');
       
-      // Reset form
+      // Reset form and refresh projects list
       setFormData({
         start_date: '',
         expected_end_date: '',
@@ -181,8 +293,12 @@ const ProjectSubmissionForm = () => {
         project_title: '',
         budget: ''
       });
+      
+      fetchSubmittedProjects();
     } catch (err) {
+      console.error('Submission error:', err);
       setError(err.message);
+      handleAuthError(err.message);
     } finally {
       setSubmitting(false);
     }
@@ -190,217 +306,348 @@ const ProjectSubmissionForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value 
+    }));
   };
+
+  if (error) {
+    handleAuthError(error);
+    return (
+      <div className="dashboard-layout">
+        <OmaSideNav />
+        <div className="dashboard-main">
+          <div className="form-container">
+            <div className="form-box">
+              <div className="form-header">
+                <div className="header-content">
+                  <span>Error Loading Form</span>
+                </div>
+              </div>
+              <div className="p-8">
+                <div className="error-container">
+                  <h2 className="error-title">Unable to Load Data</h2>
+                  <p className="error-message">{error}</p>
+                  {error.includes('log in') && (
+                    <p className="text-blue-600 font-semibold">Redirecting to login page...</p>
+                  )}
+                  <div className="text-sm text-red-600 space-y-2">
+                    <p><strong>To fix this:</strong></p>
+                    <ol className="list-decimal list-inside">
+                      <li>Start the backend server in a terminal:
+                        <pre className="bg-gray-900 text-green-400 p-2 rounded mt-1 text-xs overflow-auto">
+cd Backend
+npm install
+node server.js
+                        </pre>
+                      </li>
+                      <li>Ensure the backend is running on <code className="bg-gray-200 px-1 rounded">http://localhost:4000</code></li>
+                      <li>Refresh this page</li>
+                    </ol>
+                  </div>
+                </div>
+                <button
+                  onClick={fetchInitialData}
+                  className="submit-btn"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading form data...</p>
+      <div className="dashboard-layout">
+        <OmaSideNav />
+        <div className="dashboard-main">
+          <div className="form-container flex items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+              <p className="text-gray-600">Loading form data...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Submission</h1>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
-
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Start Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+    <div className="dashboard-layout">
+      <OmaSideNav />
+      
+      <div className="dashboard-main">
+        <div className="form-container">
+          <div className="form-box">
+            
+            {/* HEADER STRIP */}
+            <div className="form-header">
+              <div className="header-content">
+                <span>Project Submission Form</span>
+                <button 
+                  className="view-reports-btn"
+                  onClick={() => navigate('/reports')}
+                >
+                  <Eye size={16} />
+                  View All Reports
+                </button>
+              </div>
             </div>
 
-            {/* Expected End Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Expected End Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="expected_end_date"
-                value={formData.expected_end_date}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            {/* FORM BODY */}
+            <div className="p-8 space-y-8">
 
-            {/* Pillar */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pillar <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="pillar_id"
-                value={formData.pillar_id}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">-- Select Pillar --</option>
-                {pillars.map(pillar => (
-                  <option key={pillar.id} value={pillar.id}>
-                    {pillar.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* SECTION: PROJECT TIMELINE */}
+              <div className="form-section">
+                <div className="section-title">
+                  Project Timeline
+                </div>
+                <div className="section-body">
+                  <div className="section-grid">
+                    {/* Start Date */}
+                    <div>
+                      <label className="form-label">
+                        Start Date *
+                      </label>
+                      <input
+                        type="date"
+                        name="start_date"
+                        value={formData.start_date}
+                        onChange={handleChange}
+                        className="form-input"
+                        required
+                      />
+                    </div>
 
-            {/* Theme */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Theme <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="theme_id"
-                value={formData.theme_id}
-                onChange={handleChange}
-                disabled={!formData.pillar_id}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="">-- Select Theme --</option>
-                {filteredThemes.map(theme => (
-                  <option key={theme.id} value={theme.id}>
-                    {theme.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {/* Expected End Date */}
+                    <div>
+                      <label className="form-label">
+                        Expected End Date *
+                      </label>
+                      <input
+                        type="date"
+                        name="expected_end_date"
+                        value={formData.expected_end_date}
+                        onChange={handleChange}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            {/* Focus Area */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Focus Area <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="focus_area_id"
-                value={formData.focus_area_id}
-                onChange={handleChange}
-                disabled={!formData.theme_id}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="">-- Select Focus Area --</option>
-                {filteredFocusAreas.map(fa => (
-                  <option key={fa.id} value={fa.id}>
-                    {fa.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* SECTION: PROJECT CLASSIFICATION */}
+              <div className="form-section">
+                <div className="section-title">
+                  Project Classification
+                </div>
+                <div className="section-body">
+                  <div className="section-grid">
+                    {/* Pillar */}
+                    <div>
+                      <label className="form-label">
+                        Pillar *
+                      </label>
+                      <select
+                        name="pillar_id"
+                        value={formData.pillar_id}
+                        onChange={handleChange}
+                        className="form-select"
+                        required
+                      >
+                        <option value="">-- Select Pillar --</option>
+                        {pillars.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Programme */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Programme <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="programme_id"
-                value={formData.programme_id}
-                onChange={handleProgrammeChange}
-                disabled={!formData.focus_area_id}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="">-- Select Programme --</option>
-                {filteredProgrammes.map(programme => (
-                  <option key={programme.id} value={programme.id}>
-                    {programme.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {/* Theme */}
+                    <div>
+                      <label className="form-label">
+                        Theme *
+                      </label>
+                      <select
+                        name="theme_id"
+                        value={formData.theme_id}
+                        onChange={handleChange}
+                        disabled={!filteredThemes.length}
+                        className="form-select"
+                        required
+                      >
+                        <option value="">-- Select Theme --</option>
+                        {filteredThemes.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Strategy */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Strategy <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="strategy_id"
-                value={formData.strategy_id}
-                onChange={handleChange}
-                disabled={!formData.focus_area_id}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="">-- Select Strategy --</option>
-                {filteredStrategies.map(strategy => (
-                  <option key={strategy.id} value={strategy.id}>
-                    {strategy.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {/* Focus Area */}
+                    <div>
+                      <label className="form-label">
+                        Focus Area *
+                      </label>
+                      <select
+                        name="focus_area_id"
+                        value={formData.focus_area_id}
+                        onChange={handleChange}
+                        disabled={!filteredFocusAreas.length}
+                        className="form-select"
+                        required
+                      >
+                        <option value="">-- Select Focus Area --</option>
+                        {filteredFocusAreas.map(f => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Project Title */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="project_title"
-                value={formData.project_title}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+                    {/* Programme */}
+                    <div>
+                      <label className="form-label">
+                        Programme *
+                      </label>
+                      <select
+                        name="programme_id"
+                        value={formData.programme_id}
+                        onChange={handleProgrammeChange}
+                        disabled={!filteredProgrammes.length}
+                        className="form-select"
+                        required
+                      >
+                        <option value="">-- Select Programme --</option>
+                        {filteredProgrammes.map(pg => (
+                          <option key={pg.id} value={pg.id}>{pg.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Budget */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="budget"
-                value={formData.budget}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+                    {/* Strategy */}
+                    <div>
+                      <label className="form-label">
+                        Strategy
+                      </label>
+                      <select
+                        name="strategy_id"
+                        value={formData.strategy_id}
+                        onChange={handleChange}
+                        disabled={!filteredStrategies.length}
+                        className="form-select"
+                      >
+                        <option value="">-- Select Strategy --</option>
+                        {filteredStrategies.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          {/* Submit Button */}
-          <div className="mt-8">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit'
+              {/* SECTION: PROJECT DETAILS */}
+              <div className="form-section">
+                <div className="section-title">
+                  Project Details
+                </div>
+                <div className="section-body">
+                  <div className="space-y-6">
+                    {/* Project Title */}
+                    <div>
+                      <label className="form-label">
+                        Project Title *
+                      </label>
+                      <input
+                        type="text"
+                        name="project_title"
+                        value={formData.project_title}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="Enter project title"
+                        required
+                      />
+                    </div>
+
+                    {/* Budget */}
+                    <div>
+                      <label className="form-label">
+                        Budget – N$
+                      </label>
+                      <input
+                        type="number"
+                        name="budget"
+                        value={formData.budget}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="Enter budget amount (optional)"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SUBMITTED PROJECTS SECTION */}
+              {submittedProjects.length > 0 && (
+                <div className="form-section">
+                  <div className="section-title">
+                    <FileText size={16} />
+                    Submitted Projects
+                  </div>
+                  <div className="section-body">
+                    <div className="projects-grid">
+                      {submittedProjects.map(project => (
+                        <div key={project.id} className="project-card">
+                          <div className="project-info">
+                            <h4>{project.project_title}</h4>
+                            <p className="project-meta">
+                              {programmes.find(p => p.id === project.programme_id)?.name || 'Unknown Programme'}
+                            </p>
+                            <p className="project-date">
+                              Started: {new Date(project.start_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="project-actions">
+                            <button
+                              onClick={() => handleViewReport(project)}
+                              className="report-btn"
+                            >
+                              <FileText size={14} />
+                              Quarterly Report
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
+
+              {/* SUBMIT BUTTON */}
+              <div className="form-footer">
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="submit-btn"
+                >
+                  {submitting ? "Submitting..." : "Submit Project"}
+                </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  * Required fields
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default ProjectSubmissionForm;
