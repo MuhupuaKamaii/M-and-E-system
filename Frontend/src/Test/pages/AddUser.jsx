@@ -6,8 +6,7 @@ export default function AddUser() {
     username: "",
     password: "",
     role_id: "",
-    organisation_id: "",
-    focus_area_id: ""
+    organisation_id: ""
   });
 
   const [messageData, setMessageData] = useState({ msg: "", type: "" });
@@ -43,13 +42,14 @@ export default function AddUser() {
       const fetchFocusAreas = async () => {
         try {
           const res = await fetch(
-            `http://localhost:4000/api/focus-areas?org=${form.organisation_id}`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            `/api/lookups/focus-areas/${form.organisation_id}`
           );
+          if (!res.ok) throw new Error(`Status ${res.status}`);
           const data = await res.json();
           setFocusAreas(data.focusAreas || []);
+          console.log('Focus areas for org', form.organisation_id, ':', data.focusAreas);
         } catch (err) {
-          console.error(err);
+          console.error('Error fetching focus areas:', err);
           setFocusAreas([]);
         }
       };
@@ -58,7 +58,7 @@ export default function AddUser() {
       setFocusAreas([]);
       setForm(prev => ({ ...prev, focus_area_id: "" }));
     }
-  }, [form.role_id, form.organisation_id, token]);
+  }, [form.role_id, form.organisation_id]);
 
   /* -----------------------------------------------------------
       Generate Strong Password
@@ -89,8 +89,8 @@ export default function AddUser() {
     };
 
     // Validation for OMA
-    if (payload.role_id === 3 && (!payload.organisation_id || !payload.focus_area_id)) {
-      setMessageData({ msg: "Organisation and Focus Area are required for OMA role", type: "error" });
+    if (payload.role_id === 3 && !payload.organisation_id) {
+      setMessageData({ msg: "Organisation is required for OMA role", type: "error" });
       return;
     }
 
@@ -118,8 +118,7 @@ export default function AddUser() {
         username: "",
         password: "",
         role_id: "",
-        organisation_id: "",
-        focus_area_id: ""
+        organisation_id: ""
       });
 
     } catch (err) {
@@ -207,7 +206,7 @@ export default function AddUser() {
     !form.full_name ||
     !form.username ||
     !form.password ||
-    (form.role_id === "3" && (!form.organisation_id || !form.focus_area_id));
+    (form.role_id === "3" && !form.organisation_id);
 
   return (
     <div style={styles.wrapper}>
@@ -261,7 +260,7 @@ export default function AddUser() {
             <select
               style={styles.select}
               value={form.organisation_id}
-              onChange={(e) => setForm({ ...form, organisation_id: e.target.value, focus_area_id: "" })}
+              onChange={(e) => setForm({ ...form, organisation_id: e.target.value })}
               required
             >
               <option value="">Select organisation</option>
@@ -269,24 +268,6 @@ export default function AddUser() {
                 <option key={org.id} value={org.id}>{org.name}</option>
               ))}
             </select>
-
-            {/* Focus Areas */}
-            {focusAreas.length > 0 && (
-              <>
-                <label style={styles.label}>Focus Area</label>
-                <select
-                  style={styles.select}
-                  value={form.focus_area_id}
-                  onChange={(e) => setForm({ ...form, focus_area_id: e.target.value })}
-                  required
-                >
-                  <option value="">Select focus area</option>
-                  {focusAreas.map(fa => (
-                    <option key={fa.id} value={fa.id}>{fa.name}</option>
-                  ))}
-                </select>
-              </>
-            )}
           </>
         )}
 
