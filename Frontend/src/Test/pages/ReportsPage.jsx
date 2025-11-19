@@ -10,6 +10,9 @@ export default function ReportsPage() {
   const [groupBy, setGroupBy] = useState('pillar'); // pillar | programme | oma
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState('');
+  const [pillars, setPillars] = useState([]);
+  const [programmesList, setProgrammesList] = useState([]);
+  const [organisationsList, setOrganisationsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -18,6 +21,21 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchAnalytics();
   }, [groupBy, start, end]);
+
+  // fetch pillars when grouping by pillar so the dropdown reflects the pillars table
+  useEffect(() => {
+    if (groupBy === 'pillar') fetchPillars();
+  }, [groupBy]);
+
+  // fetch programmes when grouping by programme
+  useEffect(() => {
+    if (groupBy === 'programme') fetchProgrammes();
+  }, [groupBy]);
+
+  // fetch organisations when grouping by oma
+  useEffect(() => {
+    if (groupBy === 'oma') fetchOrganisations();
+  }, [groupBy]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -41,11 +59,56 @@ export default function ReportsPage() {
     }
   };
 
+  const fetchPillars = async () => {
+    try {
+      const res = await fetch('/api/lookups/pillars');
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      const list = data.pillars || [];
+      setPillars(list);
+      const names = list.map(p => p.name);
+      setItems(names);
+      setSelected(names.length ? names[0] : '');
+    } catch (err) {
+      console.error('Failed to fetch pillars', err);
+    }
+  };
+
+  const fetchProgrammes = async () => {
+    try {
+      const res = await fetch('/api/lookups/programmes');
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      const list = data.programmes || [];
+      setProgrammesList(list);
+      const names = list.map(p => p.name);
+      setItems(names);
+      setSelected(names.length ? names[0] : '');
+    } catch (err) {
+      console.error('Failed to fetch programmes', err);
+    }
+  };
+
+  const fetchOrganisations = async () => {
+    try {
+      const res = await fetch('/api/lookups/organisations');
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      const list = data.organisations || [];
+      setOrganisationsList(list);
+      const names = list.map(o => o.name);
+      setItems(names);
+      setSelected(names.length ? names[0] : '');
+    } catch (err) {
+      console.error('Failed to fetch organisations', err);
+    }
+  };
+
   const distributionData = useMemo(() => {
     // pie showing totals per group
     const labels = analytics.map(a => a.key);
     const data = analytics.map(a => a.total || 0);
-    return { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => `hsl(${(i*60)%360} 60% 40%)`) }] };
+    return { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => `hsl(${(i * 60) % 360} 60% 40%)`) }] };
   }, [analytics]);
 
   const selectedGroup = useMemo(() => analytics.find(a => a.key === selected) || null, [analytics, selected]);
@@ -99,22 +162,22 @@ export default function ReportsPage() {
 
   // stacked bar for top N groups
   const stackedData = useMemo(() => {
-    const top = [...analytics].sort((a,b) => (b.total||0)-(a.total||0)).slice(0,5);
+    const top = [...analytics].sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 5);
     const monthsSet = new Set();
-    top.forEach(t => Object.keys(t.monthly || {}).forEach(m=>monthsSet.add(m)));
+    top.forEach(t => Object.keys(t.monthly || {}).forEach(m => monthsSet.add(m)));
     const months = Array.from(monthsSet).sort();
-    const colors = top.map((_,i) => `hsl(${(i*60)%360} 70% 45%)`);
-    const datasets = top.map((t,i) => ({ label: t.key, data: months.map(m => (t.monthly && t.monthly[m]) || 0), backgroundColor: colors[i] }));
+    const colors = top.map((_, i) => `hsl(${(i * 60) % 360} 70% 45%)`);
+    const datasets = top.map((t, i) => ({ label: t.key, data: months.map(m => (t.monthly && t.monthly[m]) || 0), backgroundColor: colors[i] }));
     return { labels: months, datasets };
   }, [analytics]);
 
   // small summary KPIs
   const kpis = useMemo(() => {
-    const totalReports = analytics.reduce((s,a)=>s+(a.total||0),0);
-    const topGroup = analytics.slice().sort((a,b)=> (b.total||0)-(a.total||0))[0];
-    const last30 = analytics.reduce((s,a)=> {
+    const totalReports = analytics.reduce((s, a) => s + (a.total || 0), 0);
+    const topGroup = analytics.slice().sort((a, b) => (b.total || 0) - (a.total || 0))[0];
+    const last30 = analytics.reduce((s, a) => {
       const samples = a.samples || [];
-      const cutoff = Date.now() - 1000*60*60*24*30;
+      const cutoff = Date.now() - 1000 * 60 * 60 * 24 * 30;
       return s + samples.filter(r => new Date(r.created_at).getTime() >= cutoff).length;
     }, 0);
     return { totalReports, topGroup: topGroup ? topGroup.key : '—', last30 };
@@ -122,7 +185,7 @@ export default function ReportsPage() {
 
   // print helper: convert chart canvases to images so print/PDF captures them reliably
   const convertCanvasesToImages = () => {
-    const ids = ['chart-overall-line','chart-selected-time','chart-distribution','chart-stacked'];
+    const ids = ['chart-overall-line', 'chart-selected-time', 'chart-distribution', 'chart-stacked'];
     const created = [];
     ids.forEach(id => {
       const container = document.getElementById(id);
@@ -147,9 +210,9 @@ export default function ReportsPage() {
   };
 
   const restoreConverted = (created) => {
-    created.forEach(({container, canvas, img}) => {
-      try { if (img && img.parentNode) img.parentNode.removeChild(img); } catch (e) {}
-      try { if (canvas) canvas.style.display = ''; } catch (e) {}
+    created.forEach(({ container, canvas, img }) => {
+      try { if (img && img.parentNode) img.parentNode.removeChild(img); } catch (e) { }
+      try { if (canvas) canvas.style.display = ''; } catch (e) { }
     });
   };
 
@@ -220,12 +283,12 @@ export default function ReportsPage() {
                 <rect x="7" y="8" width="3" height="12" rx="0.5" fill="#00A3FF" />
                 <rect x="12" y="5" width="3" height="15" rx="0.5" fill="#0F4C81" />
                 <rect x="17" y="10" width="3" height="10" rx="0.5" fill="#66B2FF" />
-                <path d="M2 4c3 2 6 2 9 0s6 0 9 0" stroke="#0F4C81" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.12"/>
+                <path d="M2 4c3 2 6 2 9 0s6 0 9 0" stroke="#0F4C81" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.12" />
               </svg>
             </div>
             <h3>No analytics yet</h3>
             <p>There are no reports aggregated for the selected filters. Once reports are submitted, charts and KPIs will appear here.</p>
-            <div style={{marginTop:12}}>
+            <div style={{ marginTop: 12 }}>
               <button className="btn btn-ghost" onClick={fetchAnalytics}>Refresh</button>
             </div>
           </div>
@@ -266,7 +329,7 @@ export default function ReportsPage() {
                   <Bar data={timeSeriesData} onClick={onBarClick} />
                 </div>
               )}
-              {monthFilter && <div style={{marginTop:8}}><strong>Filtering by month:</strong> {monthFilter} <button onClick={() => setMonthFilter('')} style={{marginLeft:8}}>Clear</button></div>}
+              {monthFilter && <div style={{ marginTop: 8 }}><strong>Filtering by month:</strong> {monthFilter} <button onClick={() => setMonthFilter('')} style={{ marginLeft: 8 }}>Clear</button></div>}
               <div style={{ marginTop: 12 }}>
                 <h4>Recent reports ({selectedGroup ? selectedGroup.total : 0})</h4>
                 <div className="table-wrap">
@@ -279,12 +342,12 @@ export default function ReportsPage() {
                         if (!monthFilter) return true;
                         const mk = monthKeyFrom(r.created_at);
                         return mk === monthFilter;
-                      })).slice(0,200).map(r => (
+                      })).slice(0, 200).map(r => (
                         <tr key={r.id}>
                           <td>{r.id}</td>
                           <td>{r.programme ? r.programme.name : ''}</td>
                           <td>{r.focus_area ? r.focus_area.name : ''}</td>
-                          <td>{new Date(r.created_at||Date.now()).toLocaleString()}</td>
+                          <td>{new Date(r.created_at || Date.now()).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
