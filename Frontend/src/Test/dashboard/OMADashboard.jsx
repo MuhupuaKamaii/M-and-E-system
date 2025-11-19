@@ -278,7 +278,7 @@ const OMADashboard = () => {
 
           <div className="kpi-card clickable indicators-highlight" onClick={() => handleKpiClick('indicators')}>
             <div className="kpi-header">
-              <h3>Indicators On Track</h3>
+              <h3>Indicators Overview</h3>
               <FiCheckCircle className="kpi-icon green" />
             </div>
             <div className="kpi-value">{userData.indicatorsOnTrack.current} <span className="kpi-total">/ {userData.indicatorsOnTrack.total}</span></div>
@@ -346,7 +346,7 @@ const OMADashboard = () => {
           {/* Programmes Table */}
           <div className="content-section programmes-section">
             <div className="programmes-header">
-              <h3>Programmes & Indicator Overview</h3>
+              <h3>Indicator Overview</h3>
               <div className="search-container">
                 <div className="search-input-wrapper">
                   <FiSearch className="search-icon" />
