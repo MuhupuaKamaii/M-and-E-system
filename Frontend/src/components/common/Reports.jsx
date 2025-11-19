@@ -16,9 +16,11 @@ import {
   FiEye,
   FiUpload,
   FiEdit3,
-  FiSearch
+  FiSearch,
+  FiDownload
 } from 'react-icons/fi';
 import '../../Styles/Dashboard.css';
+import { generateReportPDF } from '../../utils/pdfGenerator';
 
 const Reports = () => {
   const { user, logout } = useAuth();
@@ -847,6 +849,24 @@ const ReportModal = ({ report, mode, onClose }) => {
     setIsEditing(true);
   };
 
+  const handleDownloadPDF = () => {
+    try {
+      console.log('PDF Download button clicked!');
+      console.log('Generating PDF for report:', editableReport);
+      
+      // Simple test to check if jsPDF works
+      if (typeof window !== 'undefined') {
+        generateReportPDF(editableReport);
+        console.log('PDF generation completed successfully');
+      } else {
+        console.error('Window object not available');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF: ' + error.message);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-NA', { style: 'currency', currency: 'NAD' }).format(amount);
   };
@@ -880,6 +900,10 @@ const ReportModal = ({ report, mode, onClose }) => {
             <p className="modal-subtitle">{report.year} - {report.quarter}</p>
           </div>
           <div className="modal-actions">
+            <button onClick={handleDownloadPDF} className="modal-download-btn">
+              <FiDownload className="w-4 h-4" />
+              Download PDF
+            </button>
             {!isEditing && (report.status === 'Draft' || report.status === 'Returned') && (
               <button onClick={handleEdit} className="modal-edit-btn">
                 <FiEdit3 className="w-4 h-4" />
