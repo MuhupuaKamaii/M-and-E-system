@@ -8,6 +8,13 @@ import axios from "axios";
 const STATUS_LABELS = { success: "Success", info: "Info", warning: "Warning", danger: "Error" };
 const STATUS_COLORS = { success: "#1e9e3f", info: "#006bb3", warning: "#d98c00", danger: "#c72b2b" };
 
+// Small dummy dataset used when backend returns no activities (development convenience)
+const DUMMY_ACTIVITIES = [
+  { id: 101, timestamp: new Date().toISOString(), user: "alice", user_id: 1, role: "Admin", action: "Login", details: "User logged in from 192.168.1.10", status: "success" },
+  { id: 102, timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), user: "bob", user_id: 2, role: "NPC", action: "Create Report", details: "Created report #R-2025-11-19", status: "success" },
+  { id: 103, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), user: "charlie", user_id: 3, role: "OMA", action: "Failed Login", details: "Invalid credentials attempt", status: "danger" },
+];
+
 function formatDatetime(isoString) {
   const d = new Date(isoString);
   return Number.isNaN(d.getTime())
@@ -16,15 +23,23 @@ function formatDatetime(isoString) {
 }
 
 export default function UserActivityTracking() {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // start with dummy activities so the table shows immediately
+  const [activities, setActivities] = useState(DUMMY_ACTIVITIES);
+  const [loading, setLoading] = useState(false);
+
+  // read optional query params to pre-filter (e.g. ?user=alice&userId=12)
+  const params = new URLSearchParams(window.location.search);
+  const initialUserSearch = params.get("user") || params.get("username") || "";
+  const initialUserId = params.get("userId") || params.get("id") || "";
 
   // filters
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialUserSearch);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [focusUserId, setFocusUserId] = useState(initialUserId);
+  const [users, setUsers] = useState([]);
 
   // pagination
   const [page, setPage] = useState(1);
@@ -36,7 +51,26 @@ export default function UserActivityTracking() {
       setLoading(true);
       try {
         const res = await axios.get("/api/user-activities");
-        setActivities(res.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        const raw = res.data || [];
+        const normalized = (raw || []).map((r) => {
+          // normalize common field names into a consistent shape
+          const id = r.id || r.activity_id || r._id || r.id;
+          const timestamp = r.timestamp || r.created_at || r.createdAt || r.time || r.ts;
+          const user = (r.user && String(r.user)) || r.username || r.user_name || r.actor || r.actor_name || r.full_name || r.name || "";
+          const user_id = r.user_id || r.userId || r.actor_id || r.actorId || r.userId || r.user_id;
+          const role = r.role || r.role_name || r.roleId || "";
+          const action = r.action || r.event || r.type || r.activity || "";
+          const details = r.details || r.meta || r.description || r.info || "";
+          const status = r.status || (r.success === true ? "success" : (r.success === false ? "danger" : (r.result || "info")));
+          return { ...r, id, timestamp, user, user_id, role, action, details, status };
+        });
+        const sorted = normalized.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        if (!sorted || sorted.length === 0) {
+          // fall back to dummy data so the table shows example rows during development
+          setActivities(DUMMY_ACTIVITIES);
+        } else {
+          setActivities(sorted);
+        }
       } catch (err) {
         console.error("Failed to fetch activities", err);
       } finally {
@@ -46,18 +80,56 @@ export default function UserActivityTracking() {
     fetchActivities();
   }, []);
 
+  // Fetch users so the tracking page can let you pick a user
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get("/api/admin/users");
+        // endpoint returns { users: [...] } or an array directly
+        const list = res.data?.users || res.data || [];
+        setUsers(list);
+      } catch (err) {
+        console.error("Failed to fetch users for tracking", err);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleUserSelect = (e) => {
+    const id = e.target.value;
+    setFocusUserId(id);
+    setPage(1);
+    if (id) {
+      const u = users.find(x => (x.id && x.id.toString() === id.toString()) || (x.user_id && x.user_id.toString() === id.toString()));
+      const name = u ? (u.username || u.full_name || "") : "";
+      setSearch(name);
+      const params = new URLSearchParams(window.location.search);
+      params.set("userId", id);
+      if (name) params.set("user", name);
+      window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+    } else {
+      setSearch("");
+      const params = new URLSearchParams(window.location.search);
+      params.delete("userId");
+      params.delete("user");
+      const q = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${q ? "?" + q : ""}`);
+    }
+  };
+
   // Filtered & paginated
   const filtered = useMemo(() => {
     return activities.filter((a) => {
       const matchesSearch = !search || a.user.toLowerCase().includes(search.toLowerCase()) || a.action.toLowerCase().includes(search.toLowerCase()) || a.details.toLowerCase().includes(search.toLowerCase());
       const matchesRole = roleFilter === "all" || a.role === roleFilter;
       const matchesStatus = statusFilter === "all" || a.status === statusFilter;
+      const matchesUserId = !focusUserId || (a.user_id && a.user_id.toString() === focusUserId.toString()) || (a.userId && a.userId.toString() === focusUserId.toString());
       const ts = new Date(a.timestamp);
       const matchesStart = !startDate || ts >= new Date(startDate + "T00:00:00");
       const matchesEnd = !endDate || ts <= new Date(endDate + "T23:59:59");
-      return matchesSearch && matchesRole && matchesStatus && matchesStart && matchesEnd;
+      return matchesSearch && matchesRole && matchesStatus && matchesStart && matchesEnd && matchesUserId;
     });
-  }, [activities, search, roleFilter, statusFilter, startDate, endDate]);
+  }, [activities, search, roleFilter, statusFilter, startDate, endDate, focusUserId]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = useMemo(() => {
@@ -78,7 +150,7 @@ export default function UserActivityTracking() {
   // CSV export
   const exportCSV = () => {
     const header = ["id","timestamp","user","role","action","details","status"];
-    const rows = filtered.map(r => [r.id,r.timestamp,r.user,r.role,r.action,r.details.replace(/\n/g," "),r.status]);
+    const rows = filtered.map(r => [r.id,r.timestamp,r.user,r.role,r.action,String(r.details).replace(/\n/g," "),r.status]);
     const csvContent = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob);
@@ -114,7 +186,6 @@ export default function UserActivityTracking() {
     <div style={styles.wrapper}>
       {/* Header & Export */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ fontSize: 20, fontWeight: 700 }}>User Activity Tracking</div>
         <div style={{ ...styles.tinyMuted }}>Monitor login history, actions and system events</div>
         <div style={styles.toolbarRight}>
           <button onClick={exportCSV} style={{ ...styles.pageButton, display: "flex", gap: 8, alignItems: "center" }}><FiDownload /> Export CSV</button>
@@ -152,6 +223,10 @@ export default function UserActivityTracking() {
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
         <div style={styles.searchBox}><FiSearch size={16} /><input placeholder="Search..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={styles.input} /></div>
+        <select style={styles.select} value={focusUserId || ""} onChange={handleUserSelect}>
+          <option value="">All Users</option>
+          {users.map(u => <option key={u.id || u.user_id} value={u.id || u.user_id}>{u.full_name || u.username || `(id:${u.id||u.user_id})`}</option>)}
+        </select>
         <select style={styles.select} value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}>
           <option value="all">All Roles</option>
           {Array.from(new Set(activities.map(a => a.role))).map(r => <option key={r} value={r}>{r}</option>)}

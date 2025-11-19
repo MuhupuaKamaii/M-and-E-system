@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AddUser from "../pages/AddUser";
 import UserManagement from "../pages/UserManagement";
 import UserActivityTracking from "../pages/UserActivityTracking";
+import ReportsPage from "../pages/ReportsPage";
 import { FiUsers, FiSettings, FiHome, FiLogOut, FiUserPlus, FiActivity } from "react-icons/fi";
 
 // Chart.js Imports
@@ -19,42 +20,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  const token = localStorage.getItem("token");
-
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
-
-  const fetchDashboardStats = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const res = await fetch("/api/dashboard/stats", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          localStorage.clear();
-          navigate("/login");
-          return;
-        }
-        throw new Error("Failed to fetch dashboard statistics");
-      }
-
-      const data = await res.json();
-      setStats(data);
-    } catch (err) {
-      console.error("Error fetching dashboard stats:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -190,24 +155,9 @@ export default function AdminDashboard() {
         <div>
           <div style={styles.logo}>Admin Panel</div>
           <div style={styles.menu}>
-            <div 
-              style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} 
-              onClick={() => setPage("dashboard")}
-            >
-              <FiHome /> Dashboard Overview
-            </div>
-            <div 
-              style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} 
-              onClick={() => setPage("users")}
-            >
-              <FiUsers /> User Management
-            </div>
-            <div 
-              style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} 
-              onClick={() => setPage("tracking")}
-            >
-              <FiActivity /> User Activity Tracking
-            </div>
+            <div style={{ ...styles.menuItem, ...(page === "dashboard" ? styles.activeMenuItem : {}) }} onClick={() => setPage("dashboard")}><FiHome /> Dashboard Overview</div>
+            <div style={{ ...styles.menuItem, ...(page === "users" ? styles.activeMenuItem : {}) }} onClick={() => setPage("users")}><FiUsers /> User Management</div>
+            <div style={{ ...styles.menuItem, ...(page === "tracking" ? styles.activeMenuItem : {}) }} onClick={() => setPage("tracking")}><FiActivity /> User Activity Tracking</div>
           </div>
         </div>
 
@@ -246,6 +196,13 @@ export default function AdminDashboard() {
             <div style={styles.card}>
               <UserActivityTracking />
             </div>
+          </>
+        )}
+
+        {page === "reports" && (
+          <>
+            <h1 style={styles.header}>Reports</h1>
+            <div style={styles.card}><ReportsPage /></div>
           </>
         )}
       </main>
