@@ -2,10 +2,11 @@
 require('dotenv').config();          // Load environment variables
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/authRoutes'); // Auth routes
-const adminRoutes = require('./routes/adminRoutes'); // Optional admin routes
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const focusAreaRoutes = require("./routes/focusAreaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes); // Optional, if you have admin routes
 app.use("/api/focus-areas", focusAreaRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 // Start server
