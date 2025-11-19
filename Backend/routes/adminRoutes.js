@@ -68,10 +68,11 @@ router.get('/users', async (req, res) => {
       return res.status(500).json({ message: usersErr.message });
     }
 
-    const { data: orgs } = await supabase.from('organisations').select('*');
+    const { data: orgs } = await supabase.from('organisation').select('*');
 
     const mapped = (users || []).map((u) => ({
-      id: u.id || u.user_id || null,
+      id: u.user_id || null,
+      user_id: u.user_id || null,
       full_name: u.full_name,
       username: u.username,
       role_id: u.role_id || u.role || null,
@@ -147,7 +148,7 @@ router.put('/users/:id', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
-    const { data, error } = await supabase.from('users').delete().eq('id', id).select();
+    const { data, error } = await supabase.from('users').delete().eq('user_id', id).select();
     if (error) {
       console.error(error);
       return res.status(400).json({ message: error.message });
@@ -155,7 +156,7 @@ router.delete('/users/:id', async (req, res) => {
     // Log activity
     try {
       const performed_by = req.body.performed_by || 'Admin';
-      const details = `Deleted user id=${id}`;
+      const details = `Deleted user user_id=${id}`;
       await supabase.from('user_activities').insert([{
         timestamp: new Date().toISOString(),
         user: performed_by,
