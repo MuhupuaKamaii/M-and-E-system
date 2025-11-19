@@ -6,8 +6,7 @@ export default function AddUser() {
     username: "",
     password: "",
     role_id: "",
-    organisation_id: "",
-    focus_area_id: ""
+    organisation_id: ""
   });
 
   const [generatedPassword, setGeneratedPassword] = useState("");
@@ -72,7 +71,7 @@ export default function AddUser() {
     };
 
     // Validations
-    if (payload.role_id === 3 && !payload.organisation_id ) {
+    if (payload.role_id === 3 && !payload.organisation_id) {
       setMessage("Organisation and Focus Area are required for OMA role");
       return;
     }
@@ -101,8 +100,7 @@ export default function AddUser() {
         username: "",
         password: "",
         role_id: "",
-        organisation_id: "",
-        focus_area_id: ""
+        organisation_id: ""
       });
       setGeneratedPassword("");
     } catch (err) {
