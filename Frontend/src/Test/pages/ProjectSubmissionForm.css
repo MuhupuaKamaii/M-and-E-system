@@ -29,6 +29,32 @@
   border-bottom: 1px solid #0a2a57;
 }
 
+/* Header content layout and the top-right View Reports button */
+.form-header .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.view-reports-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #0a2a57;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.view-reports-btn svg { color: #0a2a57; }
+.view-reports-btn:hover { background: #f3f4f6; }
+
 /* ============================
    SECTION WRAPPER
 ============================ */

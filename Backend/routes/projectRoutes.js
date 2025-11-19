@@ -4,9 +4,6 @@ const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabaseClient');
 
 // Create a new project
-// This route accepts optional auth: if a valid Bearer token is provided and matches a user,
-// the project will be associated with that user and organisation. If no token or invalid
-// token/user is provided the project will still be created with null user/organisation.
 router.post('/', async (req, res) => {
     try {
         const {
@@ -17,15 +14,11 @@ router.post('/', async (req, res) => {
             programme_id,
             strategy_id,
             theme_id,
-            submitted_by,
-            email,
-            contact_number,
             project_title,
             budget
         } = req.body;
 
-        // Default payload values
-        let user_id = null;
+        let created_by = null;
         let organisation_id = null;
 
         // If an Authorization header is present, try to verify and fetch the user.
@@ -40,16 +33,16 @@ router.post('/', async (req, res) => {
                     .eq('user_id', decoded.user_id)
                     .single();
                 if (!error && user) {
-                    user_id = user.id;
+                    created_by = user.user_id; // Use user_id as created_by
                     organisation_id = user.organisation_id || null;
                 }
             } catch (e) {
-                // ignore token errors — we'll create project without user
+                console.log('Token verification failed:', e.message);
             }
         }
 
         const payload = {
-            user_id,
+            created_by, // Changed from user_id to created_by
             organisation_id,
             start_date,
             expected_end_date,
@@ -58,12 +51,13 @@ router.post('/', async (req, res) => {
             programme_id,
             strategy_id,
             theme_id,
-            submitted_by,
-            email,
-            contact_number,
             project_title,
-            budget
+            budget,
+            status: 'active',
+            created_at: new Date().toISOString()
         };
+
+        console.log('Inserting project with payload:', payload);
 
         const { data, error } = await supabase
             .from('projects')
@@ -71,12 +65,50 @@ router.post('/', async (req, res) => {
             .select()
             .single();
 
-        if (error) return res.status(400).json({ message: error.message });
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(400).json({ message: error.message });
+        }
 
         res.json({ message: 'Project created', project: data });
     } catch (err) {
+        console.error('Server error:', err);
         res.status(500).json({ message: err.message });
     }
+});
+
+// Get user's submitted projects
+router.get('/my-projects', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.user_id;
+    
+    console.log('Fetching projects for user:', userId);
+
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('created_by', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    console.log('Found projects:', projects?.length);
+
+    res.json({ projects: projects || [] });
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Error fetching projects', error: error.message });
+  }
 });
 
 module.exports = router;
