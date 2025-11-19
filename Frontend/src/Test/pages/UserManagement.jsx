@@ -38,7 +38,7 @@ export default function UserManagement() {
 
   const fetchOrganisations = async () => {
     try {
-      const res = await fetch('/api/admin/organisations');
+      const res = await fetch('/api/lookups/organisations');
       const data = await res.json();
       setOrganisations(data.organisations || []);
     } catch (err) {
@@ -222,7 +222,7 @@ export default function UserManagement() {
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer' }}><FiPlus /> Add User</button> */}
+          <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer' }}><FiPlus /> Add User</button>
         </div>
       </div>
 
@@ -449,12 +449,12 @@ function CreateForm({ organisations, onCreate, onCancel }) {
       <label style={labelStyle}>Password</label>
       <div style={{ display: "flex", gap: 10 }}>
         <input style={{ ...inputStyle, marginBottom: 0 }} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <button type="button" onClick={generatePassword} style={{ padding: "10px 12px", background: "var(--brand-navy)", color: "#fff", borderRadius: 6, border: "none" }}>Generate</button>
+        <button type="button" onClick={generatePassword} style={{ padding: "10px 12px", background: "#003366", color: "#fff", borderRadius: 6, border: "none" }}>Generate</button>
       </div>
 
       <div style={{ marginTop: 15, display: "flex", justifyContent: "flex-end", gap: 10 }}>
-        <button onClick={onCancel}>Cancel</button>
-        <button onClick={handleSubmit} style={{ background: "var(--brand-navy)", color: "#fff", padding: "8px 14px", borderRadius: 6 }}>Create</button>
+        <button onClick={onCancel} style={{ background: "#fdfdfdff", color: "#003366", padding: "8px 14px", borderRadius: 6 }}>Cancel</button>
+        <button onClick={handleSubmit} style={{ background: "#003366", color: "#fdfdfdff", padding: "8px 14px", borderRadius: 6 }}>Create</button>
       </div>
       {message && <p style={{ marginTop: 10, color: message.toLowerCase().includes('error') ? 'var(--alert)' : 'var(--success)' }}>{message}</p>}
     </div>

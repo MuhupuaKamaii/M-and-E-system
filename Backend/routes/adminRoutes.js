@@ -90,7 +90,7 @@ router.get('/users', async (req, res) => {
 // GET /api/admin/organisations - list organisations
 router.get('/organisations', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('organisations').select('*').order('name', { ascending: true });
+    const { data, error } = await supabase.from('organisation').select('*').order('name', { ascending: true });
     if (error) {
       console.error(error);
       return res.status(500).json({ message: error.message });
