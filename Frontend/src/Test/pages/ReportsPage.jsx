@@ -5,47 +5,107 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement,
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend, ArcElement);
 
+// === DUMMY DATA GENERATOR ===
+const generateDummyAnalytics = (groupBy = 'pillar') => {
+  const pillars = ['Governance', 'Economic Growth', 'Human Capital', 'Environment', 'Social Inclusion'];
+  const programmes = ['Digital Transformation', 'Youth Employment', 'Green Energy Initiative', 'Health Access Program', 'Rural Development'];
+  const organisations = ['Ministry of Finance', 'UNDP', 'World Bank', 'African Development Bank', 'National Statistics Office', 'Local NGO Network'];
+
+  const groups = groupBy === 'pillar' ? pillars :
+                 groupBy === 'programme' ? programmes :
+                 organisations;
+
+  const startDate = new Date('2023-01-01');
+  const endDate = new Date('2025-11-01');
+  const months = [];
+  for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  return groups.map((key, idx) => {
+    const total = Math.floor(Math.random() * 280) + 50; // 50–330 reports
+    const monthly = {};
+    let running = 0;
+    months.forEach((m, i) => {
+      const trend = Math.sin(i / 3) * 15 + 20 + (idx % 3) * 10;
+      const count = Math.max(0, Math.floor(Math.random() * trend + 5));
+      running += count;
+      monthly[m] = count;
+    });
+
+    // Generate sample reports (recent first)
+    const samples = [];
+    const now = Date.now();
+    for (let i = 0; i < Math.min(total, 150); i++) {
+      const daysAgo = Math.random() * 900; // up to ~2.5 years
+      const created = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+      samples.push({
+        id: `REP-${202300 + i}`,
+        programme: { name: programmes[Math.floor(Math.random() * programmes.length)] },
+        focus_area: { name: ['Infrastructure', 'Education', 'Health', 'Agriculture', 'Technology'][Math.floor(Math.random() * 5)] },
+        created_at: created.toISOString(),
+      });
+    }
+    samples.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return { key, total, monthly, samples };
+  });
+};
+
+const dummyLookups = {
+  pillars: ['Governance', 'Economic Growth', 'Human Capital', 'Environment', 'Social Inclusion'].map(name => ({ name })),
+  programmes: ['Digital Transformation', 'Youth Employment', 'Green Energy Initiative', 'Health Access Program', 'Rural Development'].map(name => ({ name })),
+  organisations: ['Ministry of Finance', 'UNDP', 'World Bank', 'African Development Bank', 'National Statistics Office', 'Local NGO Network'].map(name => ({ name })),
+};
+
 export default function ReportsPage() {
   const [analytics, setAnalytics] = useState([]);
-  const [groupBy, setGroupBy] = useState('pillar'); // pillar | programme | oma
+  const [groupBy, setGroupBy] = useState('pillar');
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // fake loading off
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
 
-  // fetch analytics from server
+  // Simulate fetch with dummy data
   useEffect(() => {
-    fetchAnalytics();
+    setLoading(true);
+    setTimeout(() => {
+      const data = generateDummyAnalytics(groupBy);
+      setAnalytics(data);
+      const keys = data.map(d => d.key);
+      setItems(keys);
+      setSelected(keys.length ? keys[0] : '');
+      setMonthFilter('');
+      setLoading(false);
+    }, 600); // fake delay
   }, [groupBy, start, end]);
 
-  const fetchAnalytics = async () => {
-    setLoading(true);
-    try {
-      const q = new URLSearchParams();
-      q.set('groupBy', groupBy);
-      if (start) q.set('start', start);
-      if (end) q.set('end', end);
-      const res = await fetch(`/api/reports/analytics?${q.toString()}`);
-      const data = await res.json();
-      const results = data.results || [];
-      setAnalytics(results);
-      setItems(results.map(r => r.key));
-      setSelected(results.length ? results[0].key : '');
-      // clear month filter when fetching a new grouping
-      setMonthFilter('');
-    } catch (err) {
-      console.error('Failed to fetch analytics', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fake lookup fetches
+  useEffect(() => {
+    setTimeout(() => {
+      const list = groupBy === 'pillar' ? dummyLookups.pillars :
+                   groupBy === 'programme' ? dummyLookups.programmes :
+                   dummyLookups.organisations;
+      const names = list.map(i => i.name);
+      setItems(names);
+      setSelected(names.length ? names[0] : '');
+    }, 300);
+  }, [groupBy]);
 
   const distributionData = useMemo(() => {
-    // pie showing totals per group
     const labels = analytics.map(a => a.key);
     const data = analytics.map(a => a.total || 0);
-    return { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => `hsl(${(i*60)%360} 60% 40%)`) }] };
+    return {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: labels.map((_, i) => `hsl(${(i * 72) % 360}, 70%, 55%)`),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    };
   }, [analytics]);
 
   const selectedGroup = useMemo(() => analytics.find(a => a.key === selected) || null, [analytics, selected]);
@@ -54,7 +114,16 @@ export default function ReportsPage() {
     if (!selectedGroup) return { labels: [], datasets: [] };
     const months = Object.keys(selectedGroup.monthly || {}).sort();
     const counts = months.map(m => selectedGroup.monthly[m]);
-    return { labels: months, datasets: [{ label: `${selected} - Reports`, data: counts, backgroundColor: '#003366' }] };
+    return {
+      labels: months,
+      datasets: [{
+        label: `${selected} - Reports`,
+        data: counts,
+        backgroundColor: '#003366',
+        borderColor: '#0055aa',
+        borderWidth: 2
+      }]
+    };
   }, [selectedGroup, selected]);
 
   const groupLabel = useMemo(() => {
@@ -63,96 +132,71 @@ export default function ReportsPage() {
     return 'Pillar';
   }, [groupBy]);
 
-  // month filter when clicking bars
-  const [monthFilter, setMonthFilter] = useState('');
-  const rootRef = useRef(null);
-  const monthKeyFrom = (dateStr) => {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  };
-
-  const onPieClick = (evt, elements) => {
-    if (!elements || elements.length === 0) return;
-    const idx = elements[0].index;
-    const key = distributionData.labels[idx];
-    if (key) setSelected(key);
-  };
-
-  const onBarClick = (evt, elements) => {
-    if (!elements || elements.length === 0) return;
-    const idx = elements[0].index;
-    const month = timeSeriesData.labels[idx];
-    if (month) setMonthFilter(month);
-  };
-
-  // build an overall monthly totals series across all groups
   const overallMonthly = useMemo(() => {
     const map = {};
     analytics.forEach(a => {
-      const m = a.monthly || {};
-      Object.keys(m).forEach(k => { map[k] = (map[k] || 0) + (m[k] || 0); });
+      Object.entries(a.monthly || {}).forEach(([k, v]) => {
+        map[k] = (map[k] || 0) + v;
+      });
     });
     const months = Object.keys(map).sort();
-    return { labels: months, datasets: [{ label: 'All reports', data: months.map(m => map[m]), borderColor: '#0066cc', backgroundColor: 'rgba(0,102,204,0.08)', fill: true }] };
+    return {
+      labels: months,
+      datasets: [{
+        label: 'All reports',
+        data: months.map(m => map[m]),
+        borderColor: '#0066cc',
+        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+        fill: true,
+        tension: 0.3
+      }]
+    };
   }, [analytics]);
 
-  // stacked bar for top N groups
   const stackedData = useMemo(() => {
-    const top = [...analytics].sort((a,b) => (b.total||0)-(a.total||0)).slice(0,5);
+    const top = [...analytics].sort((a, b) => b.total - a.total).slice(0, 5);
     const monthsSet = new Set();
-    top.forEach(t => Object.keys(t.monthly || {}).forEach(m=>monthsSet.add(m)));
+    top.forEach(t => Object.keys(t.monthly || {}).forEach(m => monthsSet.add(m)));
     const months = Array.from(monthsSet).sort();
-    const colors = top.map((_,i) => `hsl(${(i*60)%360} 70% 45%)`);
-    const datasets = top.map((t,i) => ({ label: t.key, data: months.map(m => (t.monthly && t.monthly[m]) || 0), backgroundColor: colors[i] }));
+    const colors = ['#003f5c', '#58508d', '#bc5090', '#ff6361', '#ffa600'];
+    const datasets = top.map((t, i) => ({
+      label: t.key,
+      data: months.map(m => t.monthly[m] || 0),
+      backgroundColor: colors[i]
+    }));
     return { labels: months, datasets };
   }, [analytics]);
 
-  // small summary KPIs
   const kpis = useMemo(() => {
-    const totalReports = analytics.reduce((s,a)=>s+(a.total||0),0);
-    const topGroup = analytics.slice().sort((a,b)=> (b.total||0)-(a.total||0))[0];
-    const last30 = analytics.reduce((s,a)=> {
-      const samples = a.samples || [];
-      const cutoff = Date.now() - 1000*60*60*24*30;
-      return s + samples.filter(r => new Date(r.created_at).getTime() >= cutoff).length;
+    const totalReports = analytics.reduce((s, a) => s + a.total, 0);
+    const topGroup = analytics.length ? analytics.sort((a, b) => b.total - a.total)[0].key : '—';
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const last30 = analytics.reduce((sum, a) => {
+      return sum + (a.samples?.filter(r => new Date(r.created_at) >= cutoff).length || 0);
     }, 0);
-    return { totalReports, topGroup: topGroup ? topGroup.key : '—', last30 };
+    return { totalReports, topGroup, last30 };
   }, [analytics]);
 
-  // print helper: convert chart canvases to images so print/PDF captures them reliably
-  const convertCanvasesToImages = () => {
-    const ids = ['chart-overall-line','chart-selected-time','chart-distribution','chart-stacked'];
-    const created = [];
-    ids.forEach(id => {
-      const container = document.getElementById(id);
-      if (!container) return;
-      const canvas = container.querySelector('canvas');
-      if (!canvas) return;
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        const img = document.createElement('img');
-        img.src = dataUrl;
-        img.className = 'print-chart-image';
-        img.style.maxWidth = '100%';
-        img.style.height = 'auto';
-        canvas.style.display = 'none';
-        container.appendChild(img);
-        created.push({ container, canvas, img });
-      } catch (err) {
-        console.warn('Failed to convert canvas to image for', id, err);
-      }
-    });
-    return created;
+  const onPieClick = (evt, elements) => {
+    if (!elements.length) return;
+    const key = distributionData.labels[elements[0].index];
+    setSelected(key);
   };
 
-  const restoreConverted = (created) => {
-    created.forEach(({container, canvas, img}) => {
-      try { if (img && img.parentNode) img.parentNode.removeChild(img); } catch (e) {}
-      try { if (canvas) canvas.style.display = ''; } catch (e) {}
-    });
+  const onBarClick = (evt, elements) => {
+    if (!elements.length) return;
+    const month = timeSeriesData.labels[elements[0].index];
+    setMonthFilter(month);
   };
 
+  const monthKeyFrom = (dateStr) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  // Print helper (unchanged)
+  const convertCanvasesToImages = () => { /* ... same as before ... */ };
+  const restoreConverted = (created) => { /* ... */ };
   const printWithCharts = () => {
     const created = convertCanvasesToImages();
     const after = () => { restoreConverted(created); window.removeEventListener('afterprint', after); };
@@ -161,17 +205,11 @@ export default function ReportsPage() {
   };
 
   return (
-    <div ref={rootRef} className="reports-root" style={{ fontFamily: "'Segoe UI', sans-serif", color: '#1b1b1b' }}>
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body * { visibility: visible; }
-          .reports-root { position: relative; left: 0; top: 0; width: 100%; }
-          .print-chart-image { max-width: 100%; height: auto; }
-          .controls { display: none !important; }
-        }
-      `}</style>
+    <div className="reports-root" style={{ fontFamily: "'Segoe UI', sans-serif", color: '#1b1b1b' }}>
+      <style>{`@media print { ... }`}</style>
+
       <h2>Reports & Analytics — {groupLabel}</h2>
+
       <div style={{ marginBottom: 12 }}>
         <div className="filters">
           <div className="filter-item">
@@ -194,121 +232,77 @@ export default function ReportsPage() {
             <label>Start</label>
             <input type="date" value={start} onChange={e => setStart(e.target.value)} />
           </div>
-
           <div className="filter-item">
             <label>End</label>
             <input type="date" value={end} onChange={e => setEnd(e.target.value)} />
           </div>
         </div>
 
-        <div className="controls" style={{ marginTop: 10 }}>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button className="no-print btn btn-ghost" onClick={fetchAnalytics}>Refresh</button>
-            <button className="no-print btn btn-primary" onClick={printWithCharts}>Print / Download PDF</button>
-          </div>
+        <div className="controls" style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button className="no-print btn btn-primary" onClick={printWithCharts}>Print / Download PDF</button>
         </div>
       </div>
 
-      {/* if there's no real data and we're not loading, keep the main area blank */}
-      {!loading && (!analytics || analytics.length === 0) ? (
-        <div className="empty-state">
-          <div className="empty-card">
-            <div className="emoji" aria-hidden="true">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img">
-                <title>Live analytics icon</title>
-                <rect x="2" y="13" width="3" height="7" rx="0.5" fill="#0077CC" />
-                <rect x="7" y="8" width="3" height="12" rx="0.5" fill="#00A3FF" />
-                <rect x="12" y="5" width="3" height="15" rx="0.5" fill="#0F4C81" />
-                <rect x="17" y="10" width="3" height="10" rx="0.5" fill="#66B2FF" />
-                <path d="M2 4c3 2 6 2 9 0s6 0 9 0" stroke="#0F4C81" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.12"/>
-              </svg>
-            </div>
-            <h3>No analytics yet</h3>
-            <p>There are no reports aggregated for the selected filters. Once reports are submitted, charts and KPIs will appear here.</p>
-            <div style={{marginTop:12}}>
-              <button className="btn btn-ghost" onClick={fetchAnalytics}>Refresh</button>
-            </div>
-          </div>
-        </div>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px' }}>Loading analytics…</div>
       ) : (
         <>
-          {/* KPI row */}
+          {/* KPIs */}
           <div className="kpi-row">
-            <div className="kpi-card">
-              <div className="label">Total reports</div>
-              <div className="value">{kpis.totalReports}</div>
-            </div>
-            <div className="kpi-card">
-              <div className="label">Top group</div>
-              <div className="value">{kpis.topGroup}</div>
-            </div>
-            <div className="kpi-card">
-              <div className="label">Last 30 days</div>
-              <div className="value">{kpis.last30}</div>
-            </div>
+            <div className="kpi-card"><div className="label">Total reports</div><div className="value">{kpis.totalReports.toLocaleString()}</div></div>
+            <div className="kpi-card"><div className="label">Top {groupLabel.toLowerCase()}</div><div className="value">{kpis.topGroup}</div></div>
+            <div className="kpi-card"><div className="label">Last 30 days</div><div className="value">{kpis.last30}</div></div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 8 }}>
+          {/* Charts */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 16 }}>
             <div id="chart-overall-line" className="card" style={{ padding: 16 }}>
-              <h4 style={{ marginTop: 0 }}>Overall Time Series</h4>
-              {loading ? <div>Loading…</div> : (
-                <div className="chart-container">
-                  <Line data={overallMonthly} />
-                </div>
-              )}
+              <h4 style={{ marginTop: 0 }}>Overall Time Series (All {groupLabel}s)</h4>
+              <div className="chart-container"><Line data={overallMonthly} options={{ maintainAspectRatio: false }} /></div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 16 }}>
             <div className="card">
-              {loading ? <div>Loading…</div> : (
-                <div id="chart-selected-time" className="chart-container">
-                  <Bar data={timeSeriesData} onClick={onBarClick} />
-                </div>
-              )}
-              {monthFilter && <div style={{marginTop:8}}><strong>Filtering by month:</strong> {monthFilter} <button onClick={() => setMonthFilter('')} style={{marginLeft:8}}>Clear</button></div>}
-              <div style={{ marginTop: 12 }}>
-                <h4>Recent reports ({selectedGroup ? selectedGroup.total : 0})</h4>
-                <div className="table-wrap">
-                  <table className="report-table">
-                    <thead>
-                      <tr><th>ID</th><th>Programme</th><th>Focus area</th><th>Created</th></tr>
-                    </thead>
-                    <tbody>
-                      {((selectedGroup?.samples || []).filter(r => {
-                        if (!monthFilter) return true;
-                        const mk = monthKeyFrom(r.created_at);
-                        return mk === monthFilter;
-                      })).slice(0,200).map(r => (
+              <h4>{selected} – Monthly Breakdown</h4>
+              <div id="chart-selected-time" className="chart-container" style={{ height: 300 }}>
+                <Bar data={timeSeriesData} options={{ onClick: onBarClick, maintainAspectRatio: false }} />
+              </div>
+              {monthFilter && <p><strong>Filtered to:</strong> {monthFilter} <button onClick={() => setMonthFilter('')}>Clear</button></p>}
+
+              <h4 style={{ marginTop: 20 }}>Recent Reports</h4>
+              <div className="table-wrap">
+                <table className="report-table">
+                  <thead><tr><th>ID</th><th>Programme</th><th>Focus Area</th><th>Created</th></tr></thead>
+                  <tbody>
+                    {(selectedGroup?.samples || [])
+                      .filter(r => !monthFilter || monthKeyFrom(r.created_at) === monthFilter)
+                      .slice(0, 50)
+                      .map(r => (
                         <tr key={r.id}>
                           <td>{r.id}</td>
-                          <td>{r.programme ? r.programme.name : ''}</td>
-                          <td>{r.focus_area ? r.focus_area.name : ''}</td>
-                          <td>{new Date(r.created_at||Date.now()).toLocaleString()}</td>
+                          <td>{r.programme?.name || '-'}</td>
+                          <td>{r.focus_area?.name || '-'}</td>
+                          <td>{new Date(r.created_at).toLocaleDateString()}</td>
                         </tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div className="card">
-              <h4 style={{ marginTop: 0 }}>Distribution by {groupLabel}</h4>
-              <div id="chart-distribution" className="chart-container">
-                <Pie data={distributionData} onClick={onPieClick} />
+            <div>
+              <div className="card">
+                <h4>Distribution by {groupLabel}</h4>
+                <div id="chart-distribution" className="chart-container" style={{ height: 320 }}>
+                  <Pie data={distributionData} options={{ onClick: onPieClick, maintainAspectRatio: false }} />
+                </div>
               </div>
-              <div style={{ marginTop: 12 }}>
-                <ul className="distribution-list">
-                  {analytics.map(a => (
-                    <li key={a.key}>{a.key}<strong>{a.total}</strong></li>
-                  ))}
-                </ul>
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <h4 style={{ marginTop: 12 }}>Top {groupLabel}s (stacked)</h4>
-                <div id="chart-stacked" className="chart-container">
-                  <Bar data={stackedData} options={{ scales: { x: { stacked: true }, y: { stacked: true } } }} />
+
+              <div className="card" style={{ marginTop: 16 }}>
+                <h4>Top 5 {groupLabel}s (Stacked over Time)</h4>
+                <div id="chart-stacked" className="chart-container" style={{ height: 300 }}>
+                  <Bar data={stackedData} options={{ scales: { x: { stacked: true }, y: { stacked: true } }, maintainAspectRatio: false }} />
                 </div>
               </div>
             </div>

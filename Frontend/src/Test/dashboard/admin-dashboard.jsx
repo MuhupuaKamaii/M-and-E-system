@@ -32,7 +32,6 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 
 export default function AdminDashboard() {
   const [page, setPage] = useState("dashboard");
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -238,9 +237,6 @@ export default function AdminDashboard() {
         {page === "users" && (
           <>
             <h1 style={styles.header}>User Management</h1>
-            <button style={styles.buttonPrimary} onClick={() => setShowAddUserModal(true)}>
-              <FiUserPlus /> Add User
-            </button>
             <div style={styles.card}>
               <UserManagement onUserUpdated={fetchDashboardStats} />
             </div>
@@ -266,29 +262,8 @@ export default function AdminDashboard() {
         )}
       </main>
 
-      {/* Add User Modal */}
-      {showAddUserModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowAddUserModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginBottom: "20px" }}>Add New User</h2>
-            <AddUser onUserCreated={handleUserCreated} />
-
-            <button
-              style={{
-                padding: "10px 20px",
-                background: "#ccc",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                marginTop: 20,
-              }}
-              onClick={() => setShowAddUserModal(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* )}
+    </main> */}
+    </div >
   );
 }
