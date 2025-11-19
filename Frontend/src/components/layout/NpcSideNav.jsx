@@ -1,17 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  HiOutlineHomeModern,
-  HiOutlineSquares2X2,
-  HiOutlineClipboardDocumentList,
-  HiOutlineClipboardDocumentCheck,
-  HiOutlineChartPie,
-} from "react-icons/hi2";
+import { FiHome, FiFileText, FiBarChart2 } from "react-icons/fi";
 
 const navItems = [
-  { key: "dashboard", label: "Dashboard", icon: HiOutlineHomeModern, to: () => ({}) },
-  { key: "planning", label: "Planning", icon: HiOutlineClipboardDocumentList, to: () => ({ section: "planning" }) },
-  { key: "report", label: "Report", icon: HiOutlineChartPie, to: () => ({ section: "report" }) },
+  { key: "dashboard", label: "Dashboard", icon: FiHome, to: () => ({}) },
+  { key: "planning", label: "Planning", icon: FiFileText, to: () => ({ section: "planning" }) },
+  { key: "report", label: "Report", icon: FiFileText, to: () => ({ section: "report" }) },
 ];
 
 export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 }) {
@@ -27,11 +21,13 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
     return "Dashboard";
   }, [location.search]);
 
-  const reviewLinks = [
-    { label: "Planning", stage: "planning" },
-    { label: "Analytic", stage: "analytic" },
-    { label: "Closure", stage: "closure" },
-  ];
+  const params = new URLSearchParams(location.search);
+  const analyticsGroup = params.get("analyticsGroup");
+
+  // Auto-open Analytics submenu if on analytics pages
+  useEffect(() => {
+    if (analyticsGroup && !isReviewOpen) setIsReviewOpen(true);
+  }, [analyticsGroup]);
 
   const handleReviewNavigate = (stage) => {
     navigate(`/npc-dashboard?stage=${stage}`);
@@ -67,20 +63,25 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
               type="button"
               onClick={() => setIsReviewOpen((prev) => !prev)}
             >
-              <HiOutlineClipboardDocumentCheck size={20} />
+              <FiBarChart2 size={20} />
               <span>Analytics</span>
             </button>
             {isReviewOpen && (
               <div className="npc-sidenav__submenu">
-                {analyticsGroups.map((group) => (
-                  <button
-                    key={group.key}
-                    type="button"
-                    onClick={() => navigate(`/npc-dashboard?analyticsGroup=${group.key}`)}
-                  >
-                    {group.label}
-                  </button>
-                ))}
+                <select
+                  className="npc-sidenav__select"
+                  value={analyticsGroup || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) return;
+                    navigate(`/npc-dashboard?analyticsGroup=${val}`);
+                  }}
+                >
+                  <option value="" disabled>Select analytics</option>
+                  {analyticsGroups.map((g) => (
+                    <option key={g.key} value={g.key}>{g.label}</option>
+                  ))}
+                </select>
               </div>
             )}
           </div>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>At‑risk OMAs</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --navy: #0F2A45;
+      --blue: #4A90E2;
+      --border: #d5dfea;
+      --text: #0e1a2b;
+      --muted: #5E7BAA;
+      --red: #C0342A;
+    }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; color: var(--text); background: #f7fbff; }
+    .wrap { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+    h1 { margin: 0 0 16px; font-size: 1.6rem; }
+    .alert {
+      display: flex; align-items: center; gap: 16px;
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    .alert__icon {
+      width: 44px; height: 44px; border-radius: 12px; background: #FCECEE;
+      display: grid; place-items: center; color: var(--red); font-weight: 900;
+    }
+    .alert__body h3 { margin: 0; color: var(--red); }
+    .alert__body p { margin: 4px 0 0; color: var(--muted); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 14px; border-radius: 12px; border: 1px solid var(--blue);
+      background: var(--blue); color: #fff; font-weight: 700; cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(74,144,226,0.25); }
+    .hidden { display: none !important; }
+
+    .table-card { margin-top: 16px; background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .table-head {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); background: #f7fbff;
+    }
+    .table-head h2 { margin: 0; font-size: 1.1rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+    thead th { border-top: none; color: var(--muted); text-transform: uppercase; font-size: 0.78rem; }
+    .pill {
+      display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+      background: rgba(192,52,42,0.12); color: var(--red); border: 1px solid rgba(192,52,42,0.3);
+    }
+    .sub { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dashboard</h1>
+
+    <!-- Initial alert -->
+    <div id="atRiskAlert" class="alert">
+      <div class="alert__icon">!</div>
+      <div class="alert__body">
+        <h3>At‑risk OMAs</h3>
+        <p>One or more OMAs may be vulnerable or behind schedule.</p>
+      </div>
+      <button class="btn" onclick="showAtRiskTable()">View at‑risk OMAs</button>
+    </div>
+
+    <!-- Table container -->
+    <div id="tableContainer" class="table-card hidden" aria-live="polite">
+      <div class="table-head">
+        <h2>At‑risk OMAs</h2>
+        <button class="btn" onclick="backToAlert()">Back</button>
+      </div>
+      <div class="table-wrap">
+        <table id="omasTable">
+          <thead>
+            <tr>
+              <th>OMA</th>
+              <th>Type/Pillar</th>
+              <th>Issue</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody><!-- rows injected by JS --></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Static data
+    const OMAS_AT_RISK = [
+      {
+        id: 'oma-mohss',
+        name: 'Ministry of Health and Social Services',
+        type: 'Human Development',
+        issue: 'Evidence gaps for Q2 indicators',
+        description: 'Several facilities did not submit complete datasets; verification pending for 12 sites.'
+      },
+      {
+        id: 'oma-mawlr',
+        name: 'Ministry of Agriculture, Water and Land Reform',
+        type: 'Economic Growth',
+        issue: 'Delays in borehole rehabilitation',
+        description: 'Procurement slippage and vendor capacity issues have pushed timelines by ~6 weeks.'
+      },
+      {
+        id: 'oma-mot',
+        name: 'Ministry of Tourism',
+        type: 'Economic Growth',
+        issue: 'Budget overspend risk',
+        description: 'Exchange-rate fluctuations on imported equipment; mitigation plan under review.'
+      }
+    ];
+
+    function showAtRiskTable() {
+      // Hide alert, show table
+      document.getElementById('atRiskAlert').classList.add('hidden');
+      const tableCard = document.getElementById('tableContainer');
+      const tbody = document.querySelector('#omasTable tbody');
+      tbody.innerHTML = '';
+
+      // Build rows
+      OMAS_AT_RISK.forEach(oma => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.innerHTML = `<strong>${oma.name}</strong><div class="sub">ID: ${oma.id}</div>`;
+
+        const tdType = document.createElement('td');
+        tdType.textContent = oma.type;
+
+        const tdIssue = document.createElement('td');
+        tdIssue.innerHTML = `<span class="pill">${oma.issue}</span>`;
+
+        const tdDesc = document.createElement('td');
+        tdDesc.textContent = oma.description;
+
+        tr.append(tdName, tdType, tdIssue, tdDesc);
+        tbody.appendChild(tr);
+      });
+
+      tableCard.classList.remove('hidden');
+    }
+
+    function backToAlert() {
+      document.getElementById('tableContainer').classList.add('hidden');
+      document.getElementById('atRiskAlert').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
