@@ -28,9 +28,10 @@ export default function UserManagement() {
 
   const fetchOrganisations = async () => {
     try {
-      const res = await fetch('/api/admin/organisations');
+      const res = await fetch('/api/lookups/organisations');
       const data = await res.json();
       setOrganisations(data.organisations || []);
+      console.log('Organisations fetched:', data.organisations);
     } catch (err) {
       console.error('Failed to fetch organisations', err);
     }
@@ -155,16 +156,16 @@ export default function UserManagement() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div style={styles.searchWrapper}>
-        <FiSearch size={18} color="#0d1b2a" />
-        <input
-          type="text"
-          placeholder="Search by name, username or role..."
-          style={styles.searchInput}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+          <FiSearch size={18} color="#0d1b2a" />
+          <input
+            type="text"
+            placeholder="Search by name, username or role..."
+            style={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display:'inline-flex', gap:8, alignItems:'center' }}><FiPlus /> New User</button>
+        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display: 'inline-flex', gap: 8, alignItems: 'center' }}><FiPlus /> New User</button>
       </div>
 
       <div style={styles.tableWrapper}>
@@ -248,7 +249,7 @@ export default function UserManagement() {
   );
 }
 
-function CreateForm({ organisations, onCreate, onCancel }){
+function CreateForm({ organisations, onCreate, onCancel }) {
   const [full_name, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -262,22 +263,22 @@ function CreateForm({ organisations, onCreate, onCancel }){
 
   return (
     <div>
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Full name" value={full_name} onChange={e=>setFullName(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={role_id} onChange={e=>setRoleId(e.target.value)}>
+      <input style={{ width: '100%', padding: 8, marginBottom: 10 }} placeholder="Full name" value={full_name} onChange={e => setFullName(e.target.value)} />
+      <input style={{ width: '100%', padding: 8, marginBottom: 10 }} placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
+      <input style={{ width: '100%', padding: 8, marginBottom: 10 }} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+      <select style={{ width: '100%', padding: 8, marginBottom: 10 }} value={role_id} onChange={e => setRoleId(e.target.value)}>
         <option value={1}>Admin</option>
         <option value={2}>NPC</option>
         <option value={3}>OMA</option>
         <option value={4}>User</option>
       </select>
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={organisation_id} onChange={e=>setOrganisationId(e.target.value)}>
+      <select style={{ width: '100%', padding: 8, marginBottom: 10 }} value={organisation_id} onChange={e => setOrganisationId(e.target.value)}>
         <option value="">-- Organisation (optional) --</option>
         {organisations.map(o => <option key={o.organisation_id || o.id} value={o.organisation_id || o.id}>{o.name}</option>)}
       </select>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={onCancel} style={{padding:'8px 12px',borderRadius:8}}>Cancel</button>
-        <button onClick={submit} style={{padding:'8px 12px',borderRadius:8,background:'#0d1b2a',color:'#fff'}}>Create</button>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button onClick={onCancel} style={{ padding: '8px 12px', borderRadius: 8 }}>Cancel</button>
+        <button onClick={submit} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff' }}>Create</button>
       </div>
     </div>
   )

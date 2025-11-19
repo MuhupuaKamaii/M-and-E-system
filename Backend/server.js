@@ -27,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/focus-areas", focusAreaRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use('/api/user-activities', activityRoutes);
 app.use("/api/dashboard", dashboardRoutes); // ✅ NEW
 app.use('/api/lookups', lookupRoutes);
