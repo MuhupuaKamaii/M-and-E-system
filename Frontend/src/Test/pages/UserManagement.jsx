@@ -38,10 +38,9 @@ export default function UserManagement() {
 
   const fetchOrganisations = async () => {
     try {
-      const res = await fetch('/api/lookups/organisations');
+      const res = await fetch('/api/admin/organisations');
       const data = await res.json();
       setOrganisations(data.organisations || []);
-      console.log('Organisations fetched:', data.organisations);
     } catch (err) {
       console.error('Failed to fetch organisations', err);
     }
@@ -222,7 +221,9 @@ export default function UserManagement() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display:'inline-flex', gap:8, alignItems:'center' }}><FiPlus /> New User</button>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display:'inline-flex', gap:8, alignItems:'center', padding:'8px 12px', borderRadius:8, background:'#0d1b2a', color:'#fff', border:'none', cursor:'pointer' }}><FiPlus /> Add User</button>
+        </div>
       </div>
 
       <div style={styles.tableWrapper}>
@@ -346,35 +347,114 @@ export default function UserManagement() {
 }
 
 function CreateForm({ organisations, onCreate, onCancel }){
-  const [full_name, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role_id, setRoleId] = useState(2);
-  const [organisation_id, setOrganisationId] = useState('');
+  const [form, setForm] = useState({
+    full_name: "",
+    username: "",
+    password: "",
+    role_id: "",
+    organisation_id: "",
+    focus_area_id: ""
+  });
 
-  const submit = () => {
-    const payload = { full_name, username, password, role_id: Number(role_id), organisation_id: organisation_id ? Number(organisation_id) : null };
-    onCreate(payload);
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [focusAreas, setFocusAreas] = useState([]);
+  const [localOrgs] = useState(organisations || []);
+
+  const token = localStorage.getItem("token");
+
+  const generatePassword = () => {
+    const pwd = Math.random().toString(36).slice(-8);
+    setForm({ ...form, password: pwd });
+    setGeneratedPassword(pwd);
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    const payload = {
+      full_name: form.full_name,
+      username: form.username,
+      password: form.password,
+      role_id: parseInt(form.role_id),
+      organisation_id: form.organisation_id ? parseInt(form.organisation_id) : null,
+      focus_area_id: form.focus_area_id ? parseInt(form.focus_area_id) : null,
+    };
+
+    if (payload.role_id === 3 && !payload.organisation_id) {
+      setMessage("Organisation and Focus Area are required for OMA role");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setMessage(data?.message || "Error creating user");
+        return;
+      }
+
+      setMessage(`User created! Temporary Password: ${data?.plain_password || ''}`);
+
+      setForm({ full_name: "", username: "", password: "", role_id: "", organisation_id: "", focus_area_id: "" });
+      setGeneratedPassword("");
+      try { onCreate && onCreate(); } catch (e) {}
+    } catch (err) {
+      console.error(err);
+      setMessage("Server error while creating user");
+    }
+  };
+
+  const inputStyle = { width: "100%", padding: 10, marginBottom: 12, borderRadius: 6, border: "1px solid #ccc" };
+  const labelStyle = { fontWeight: 600, marginBottom: 5, display: "block" };
 
   return (
     <div>
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Full name" value={full_name} onChange={e=>setFullName(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={role_id} onChange={e=>setRoleId(e.target.value)}>
-        <option value={1}>Admin</option>
-        <option value={2}>NPC</option>
-        <option value={3}>OMA</option>
-        <option value={4}>User</option>
+      <label style={labelStyle}>Full Name</label>
+      <input style={inputStyle} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+
+      <label style={labelStyle}>Username</label>
+      <input style={inputStyle} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+
+      <label style={labelStyle}>Role</label>
+      <select style={inputStyle} value={form.role_id} onChange={(e) => setForm({ ...form, role_id: e.target.value })}>
+        <option value="">Select role</option>
+        <option value="1">Admin</option>
+        <option value="2">NPC</option>
+        <option value="3">OMA</option>
       </select>
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={organisation_id} onChange={e=>setOrganisationId(e.target.value)}>
-        <option value="">-- Organisation (optional) --</option>
-        {organisations.map(o => <option key={o.organisation_id || o.id} value={o.organisation_id || o.id}>{o.name}</option>)}
-      </select>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={onCancel} style={{padding:'8px 12px',borderRadius:8}}>Cancel</button>
-        <button onClick={submit} style={{padding:'8px 12px',borderRadius:8,background:'#0d1b2a',color:'#fff'}}>Create</button>
+
+      {form.role_id === "3" && (
+        <>
+          <label style={labelStyle}>Organisation (OMA)</label>
+          <select style={inputStyle} value={form.organisation_id} onChange={(e) => setForm({ ...form, organisation_id: e.target.value, focus_area_id: "" })}>
+            <option value="">Select organisation</option>
+            {localOrgs.map((o) => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+        </>
+      )}
+
+      <label style={labelStyle}>Password</label>
+      <div style={{ display: "flex", gap: 10 }}>
+        <input style={{ ...inputStyle, marginBottom: 0 }} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <button type="button" onClick={generatePassword} style={{ padding: "10px 12px", background: "var(--brand-navy)", color: "#fff", borderRadius: 6, border: "none" }}>Generate</button>
+      </div>
+
+      <div style={{ marginTop: 15, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <button onClick={onCancel}>Cancel</button>
+        <button onClick={handleSubmit} style={{ background: "var(--brand-navy)", color: "#fff", padding: "8px 14px", borderRadius: 6 }}>Create</button>
       </div>
       {message && <p style={{ marginTop: 10, color: message.toLowerCase().includes('error') ? 'var(--alert)' : 'var(--success)' }}>{message}</p>}
     </div>
