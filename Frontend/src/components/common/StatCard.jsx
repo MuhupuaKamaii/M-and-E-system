@@ -6,12 +6,24 @@ export default function StatCard({
   subtext,
   trend = { direction: "up", value: "0%" },
   tone = "default",
+  onClick,
 }) {
   const isUp = trend.direction === "up";
   const TrendIcon = isUp ? HiArrowTrendingUp : HiArrowTrendingDown;
 
   return (
-    <article className={`npc-stat npc-stat--${tone}`}>
+    <div
+      className={`npc-stat npc-stat--${tone} ${onClick ? "is-clickable" : ""}`}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <div>
         <p className="npc-stat__label">{label}</p>
         <p className="npc-stat__value">{value}</p>
@@ -21,7 +33,7 @@ export default function StatCard({
         <TrendIcon size={16} />
         <span>{trend.value}</span>
       </div>
-    </article>
+    </div>
   );
 }
 
