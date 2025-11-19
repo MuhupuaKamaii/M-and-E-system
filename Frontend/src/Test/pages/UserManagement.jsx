@@ -1,22 +1,40 @@
 // UserManagement.jsx
 import React, { useState, useEffect } from "react";
-import { FiEdit, FiTrash2, FiSearch, FiX } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiSearch, FiX, FiPlus } from "react-icons/fi";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [organisations, setOrganisations] = useState([]);
 
-  // Dummy data (replace with API call)
+  // Fetch users and organisations
   useEffect(() => {
-    const dummyUsers = [
-      { id: 1, full_name: "John Doe", username: "jdoe", role: "Admin", organisation: "NPC" },
-      { id: 2, full_name: "Jane Smith", username: "jsmith", role: "OMA", organisation: "MAFWLR" },
-      { id: 3, full_name: "Peter Pan", username: "ppan", role: "NPC", organisation: "MIRT" },
-    ];
-    setUsers(dummyUsers);
+    fetchUsers();
+    fetchOrganisations();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+    }
+  };
+
+  const fetchOrganisations = async () => {
+    try {
+      const res = await fetch('/api/admin/organisations');
+      const data = await res.json();
+      setOrganisations(data.organisations || []);
+    } catch (err) {
+      console.error('Failed to fetch organisations', err);
+    }
+  };
 
   const filteredUsers = users.filter(
     (u) =>
@@ -32,14 +50,53 @@ export default function UserManagement() {
 
   const handleDeleteClick = (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((u) => u.id !== userId));
+      // call API
+      fetch(`/api/admin/users/${userId}`, { method: 'DELETE' }).then(() => fetchUsers()).catch(err => console.error(err));
     }
   };
 
   const handleSaveEdit = () => {
-    setUsers(users.map(u => (u.id === editUser.id ? editUser : u)));
-    setShowModal(false);
-    setEditUser(null);
+    // Update on server
+    const payload = {
+      full_name: editUser.full_name,
+      username: editUser.username,
+      // map role text to role_id where possible
+      role_id: roleTextToId(editUser.role),
+      organisation_id: findOrganisationId(editUser.organisation)
+    };
+    fetch(`/api/admin/users/${editUser.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(r => r.json())
+      .then(() => {
+        fetchUsers();
+        setShowModal(false);
+        setEditUser(null);
+      })
+      .catch(err => console.error('Update failed', err));
+  };
+
+  const roleTextToId = (roleText) => {
+    if (!roleText) return null;
+    const t = roleText.toString().toLowerCase();
+    if (t.includes('admin')) return 1;
+    if (t.includes('npc')) return 2;
+    if (t.includes('oma')) return 3;
+    return 4; // generic user
+  };
+
+  const findOrganisationId = (orgName) => {
+    if (!orgName) return null;
+    const found = organisations.find(o => o.name === orgName || o.organisation_id === orgName || o.id === orgName);
+    return found ? (found.organisation_id || found.id) : null;
+  };
+
+  const handleCreateUser = (newUser) => {
+    fetch('/api/admin/create-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newUser) })
+      .then(r => r.json())
+      .then(() => {
+        fetchUsers();
+        setShowCreateModal(false);
+      })
+      .catch(err => console.error('Create failed', err));
   };
 
   const styles = {
@@ -96,7 +153,8 @@ export default function UserManagement() {
     <div style={styles.container}>
       <h2 style={styles.header}>User Management</h2>
 
-      <div style={styles.searchWrapper}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <div style={styles.searchWrapper}>
         <FiSearch size={18} color="#0d1b2a" />
         <input
           type="text"
@@ -105,6 +163,8 @@ export default function UserManagement() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        </div>
+        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display:'inline-flex', gap:8, alignItems:'center' }}><FiPlus /> New User</button>
       </div>
 
       <div style={styles.tableWrapper}>
@@ -159,24 +219,66 @@ export default function UserManagement() {
               onChange={(e) => setEditUser({ ...editUser, username: e.target.value })}
               placeholder="Username"
             />
-            <input
-              type="text"
-              style={styles.modalInput}
-              value={editUser.role}
-              onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
-              placeholder="Role"
-            />
-            <input
-              type="text"
-              style={styles.modalInput}
-              value={editUser.organisation}
-              onChange={(e) => setEditUser({ ...editUser, organisation: e.target.value })}
-              placeholder="Organisation"
-            />
+            <select style={styles.modalInput} value={editUser.role} onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}>
+              <option>Admin</option>
+              <option>NPC</option>
+              <option>OMA</option>
+              <option>User</option>
+            </select>
+            <select style={styles.modalInput} value={editUser.organisation || ''} onChange={(e) => setEditUser({ ...editUser, organisation: e.target.value })}>
+              <option value="">-- Organisation --</option>
+              {organisations.map(o => <option key={o.organisation_id || o.id} value={o.name}>{o.name}</option>)}
+            </select>
             <button style={styles.modalSaveBtn} onClick={handleSaveEdit}>Save Changes</button>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <FiX style={styles.modalClose} onClick={() => setShowCreateModal(false)} />
+            <h3 style={styles.modalHeader}>Create New User</h3>
+            <CreateForm organisations={organisations} onCreate={handleCreateUser} onCancel={() => setShowCreateModal(false)} />
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function CreateForm({ organisations, onCreate, onCancel }){
+  const [full_name, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [role_id, setRoleId] = useState(2);
+  const [organisation_id, setOrganisationId] = useState('');
+
+  const submit = () => {
+    const payload = { full_name, username, password, role_id: Number(role_id), organisation_id: organisation_id ? Number(organisation_id) : null };
+    onCreate(payload);
+  };
+
+  return (
+    <div>
+      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Full name" value={full_name} onChange={e=>setFullName(e.target.value)} />
+      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} />
+      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
+      <select style={{width:'100%',padding:8,marginBottom:10}} value={role_id} onChange={e=>setRoleId(e.target.value)}>
+        <option value={1}>Admin</option>
+        <option value={2}>NPC</option>
+        <option value={3}>OMA</option>
+        <option value={4}>User</option>
+      </select>
+      <select style={{width:'100%',padding:8,marginBottom:10}} value={organisation_id} onChange={e=>setOrganisationId(e.target.value)}>
+        <option value="">-- Organisation (optional) --</option>
+        {organisations.map(o => <option key={o.organisation_id || o.id} value={o.organisation_id || o.id}>{o.name}</option>)}
+      </select>
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        <button onClick={onCancel} style={{padding:'8px 12px',borderRadius:8}}>Cancel</button>
+        <button onClick={submit} style={{padding:'8px 12px',borderRadius:8,background:'#0d1b2a',color:'#fff'}}>Create</button>
+      </div>
+    </div>
+  )
 }
