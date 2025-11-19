@@ -6,7 +6,6 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const focusAreaRoutes = require("./routes/focusAreaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
 const activityRoutes = require('./routes/activityRoutes');
 const dashboardRoutes = require("./routes/dashboardRoutes"); // ✅ NEW
 const lookupRoutes = require("./routes/lookupRoutes");
