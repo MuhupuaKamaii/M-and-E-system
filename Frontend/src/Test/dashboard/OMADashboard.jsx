@@ -1,5 +1,5 @@
+import { useAuth } from '../../contexts/AuthContext'; 
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { 
   FiHome, 
   FiFileText, 
@@ -16,8 +16,8 @@ import {
   FiEye,
   FiSearch
 } from 'react-icons/fi';
-import BudgetChart from '../../components/BudgetChart';
-import '../Dashboard.css';
+import BudgetChart from "../../components/charts/BudgetChart";
+import '../../Styles/Dashboard.css';
 
 const OMADashboard = () => {
   const { user, logout } = useAuth();
