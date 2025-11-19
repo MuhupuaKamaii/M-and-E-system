@@ -12,13 +12,28 @@ export default function AddUser() {
 
   const [messageData, setMessageData] = useState({ msg: "", type: "" });
   const [focusAreas, setFocusAreas] = useState([]);
-  const [organisations] = useState([
-    { id: 1, name: "MAFWLR" },
-    { id: 2, name: "MIRT" },
-    { id: 3, name: "MIME" }
-  ]);
+  const [organisations, setOrganisations] = useState([]);
 
   const token = localStorage.getItem("token");
+
+  /* -----------------------------------------------------------
+      Fetch Organisations Dynamically on component mount
+  ----------------------------------------------------------*/
+  useEffect(() => {
+    const fetchOrganisations = async () => {
+      try {
+        const res = await fetch(`/api/lookups/organisations`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const data = await res.json();
+        setOrganisations(data.organisations || []);
+        console.log('Organisations fetched:', data.organisations);
+      } catch (err) {
+        console.error('Error fetching organisations:', err);
+        setOrganisations([]);
+      }
+    };
+    fetchOrganisations();
+  }, []);
 
   /* -----------------------------------------------------------
       Fetch Focus Areas Dynamically
