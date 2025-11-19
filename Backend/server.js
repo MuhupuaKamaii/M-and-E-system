@@ -10,6 +10,7 @@ const activityRoutes = require('./routes/activityRoutes');
 const dashboardRoutes = require("./routes/dashboardRoutes"); // ✅ NEW
 const lookupRoutes = require("./routes/lookupRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const proposals = require('./routes/proposals');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/user-activities', activityRoutes);
 app.use("/api/dashboard", dashboardRoutes); // ✅ NEW
 app.use('/api/lookups', lookupRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/proposals', proposals); // ✅ NEW
 
 
 // Start server
