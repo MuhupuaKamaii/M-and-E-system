@@ -41,7 +41,7 @@ function Login() {
           window.location.href = "/npc-dashboard";
           break;
         case "OMA":
-          window.location.href = "/oma-dashboard";
+          window.location.href = "/omaDashboard";
           break;
         default:
           setError("Unknown role");
