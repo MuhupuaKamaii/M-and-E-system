@@ -1,6 +1,8 @@
 // controllers/authController.js
 
 const { login } = require('../services/authService');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 /**
  * Login controller
@@ -31,6 +33,23 @@ async function loginUser(req, res) {
         token: userData.token
       }
     });
+
+    // Fire-and-forget: log successful login to user_activities table (best-effort)
+    (async () => {
+      try {
+        await supabase.from('user_activities').insert([{
+          timestamp: new Date().toISOString(),
+          user: userData.fullName || userData.userId || userData.user || 'Unknown',
+          user_id: userData.userId || null,
+          role: userData.role || null,
+          action: 'Login',
+          details: 'User logged in successfully',
+          status: 'success'
+        }]);
+      } catch (logErr) {
+        console.error('Failed to log login activity', logErr);
+      }
+    })();
   } catch (err) {
     // Handle errors (wrong password, user not found, etc.)
     res.status(400).json({ message: err.message });

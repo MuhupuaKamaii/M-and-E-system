@@ -90,7 +90,7 @@ router.get('/users', async (req, res) => {
 // GET /api/admin/organisations - list organisations
 router.get('/organisations', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('organisations').select('*').order('name', { ascending: true });
+    const { data, error } = await supabase.from('organisation').select('*').order('name', { ascending: true });
     if (error) {
       console.error(error);
       return res.status(500).json({ message: error.message });
@@ -114,7 +114,7 @@ router.put('/users/:id', async (req, res) => {
     if (role_id !== undefined) updates.role_id = Number(role_id);
     if (organisation_id !== undefined) updates.organisation_id = organisation_id ? Number(organisation_id) : null;
 
-    const { data, error } = await supabase.from('users').update(updates).eq('user_id', id).select();
+    const { data, error } = await supabase.from('users').update(updates).eq('id', id).select();
     if (error) {
       console.error(error);
       return res.status(400).json({ message: error.message });
@@ -147,7 +147,7 @@ router.put('/users/:id', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
-    const { data, error } = await supabase.from('users').delete().eq('user_id', id).select();
+    const { data, error } = await supabase.from('users').delete().eq('id', id).select();
     if (error) {
       console.error(error);
       return res.status(400).json({ message: error.message });

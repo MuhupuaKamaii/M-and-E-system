@@ -5,6 +5,7 @@
 - npm install
 - npm install axios
 - npm install react-router-dom (only if navigating from one page is needed)
+- npm install recharts
 
 ## How to push to github
 1. git status
