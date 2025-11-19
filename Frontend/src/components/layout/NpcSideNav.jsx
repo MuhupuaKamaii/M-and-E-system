@@ -8,7 +8,7 @@ import {
   HiOutlineChartPie,
 } from "react-icons/hi2";
 import NpcReviewerCard from "../profile/NpcReviewerCard";
-import NpcApprovalSpotlight from "../common/NpcApprovalSpotlight";
+import AtRiskCard from "../common/AtRiskCard";
 
 const navItems = [
   { label: "Dashboard", icon: HiOutlineHomeModern },
@@ -34,7 +34,12 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
   return (
     <aside className="npc-sidenav">
       <div>
-        <NpcApprovalSpotlight pending={pendingApprovals} variant="compact" />
+        <AtRiskCard
+          title="At Risk OMAs"
+          body="One or more OMAs are highly vulnerable or compromised."
+          ctaLabel="VIEW AT RISK OMAs"
+          onClick={() => navigate("/npc-dashboard?filter=at-risk")}
+        />
         <div className="npc-sidenav__list">
           {navItems.map(({ label, icon: Icon }) => (
             <button
