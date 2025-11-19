@@ -1,14 +1,20 @@
 // UserManagement.jsx
 import React, { useState, useEffect } from "react";
-import { FiEdit, FiTrash2, FiSearch, FiX, FiPlus } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiSearch, FiX, FiPlus, FiActivity } from "react-icons/fi";
+import './UserManagement.css';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [organisations, setOrganisations] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const [createFormKey, setCreateFormKey] = useState(0);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch users and organisations
   useEffect(() => {
@@ -17,12 +23,16 @@ export default function UserManagement() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoadingUsers(true);
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
       setUsers(data.users || []);
     } catch (err) {
       console.error('Failed to fetch users', err);
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
@@ -48,11 +58,31 @@ export default function UserManagement() {
     setShowModal(true);
   };
 
-  const handleDeleteClick = (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      // call API
-      fetch(`/api/admin/users/${userId}`, { method: 'DELETE' }).then(() => fetchUsers()).catch(err => console.error(err));
+  const handleDeleteClick = (user) => {
+    setDeletingUser(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingUser) return;
+    try {
+      await fetch(`/api/admin/users/${deletingUser.id}`, { method: 'DELETE' });
+      fetchUsers();
+      setToast({ show: true, message: 'User deleted', type: 'success' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+    } catch (err) {
+      console.error('Delete failed', err);
+      setToast({ show: true, message: 'Failed to delete user', type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 4000);
+    } finally {
+      setShowDeleteModal(false);
+      setDeletingUser(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingUser(null);
   };
 
   const handleSaveEdit = () => {
@@ -70,8 +100,14 @@ export default function UserManagement() {
         fetchUsers();
         setShowModal(false);
         setEditUser(null);
+        setToast({ show: true, message: 'User updated', type: 'success' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
       })
-      .catch(err => console.error('Update failed', err));
+      .catch(err => {
+        console.error('Update failed', err);
+        setToast({ show: true, message: 'Failed to update user', type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 4000);
+      });
   };
 
   const roleTextToId = (roleText) => {
@@ -89,14 +125,34 @@ export default function UserManagement() {
     return found ? (found.organisation_id || found.id) : null;
   };
 
+  const getOrganisationName = (user) => {
+    if (!user) return '';
+    if (user.organisation) {
+      const byName = organisations.find(o => o.name === user.organisation);
+      if (byName) return byName.name;
+    }
+    const orgId = user.organisation_id || user.organisation || user.organisationId || null;
+    if (!orgId) return '';
+    const found = organisations.find(o => (o.organisation_id && o.organisation_id.toString() === orgId.toString()) || (o.id && o.id.toString() === orgId.toString()));
+    return found ? found.name : '';
+  };
+
   const handleCreateUser = (newUser) => {
     fetch('/api/admin/create-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newUser) })
-      .then(r => r.json())
-      .then(() => {
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Create failed');
+        await r.json().catch(() => null);
         fetchUsers();
+        setCreateFormKey(k => k + 1);
         setShowCreateModal(false);
+        setToast({ show: true, message: 'User created successfully', type: 'success' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
       })
-      .catch(err => console.error('Create failed', err));
+      .catch((err) => {
+        console.error('Create failed', err);
+        setToast({ show: true, message: 'Failed to create user', type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 4000);
+      });
   };
 
   const styles = {
@@ -118,9 +174,10 @@ export default function UserManagement() {
     table: { width: "100%", borderCollapse: "collapse", minWidth: "700px" },
     th: { textAlign: "left", padding: "14px 18px", backgroundColor: "#0d1b2a", color: "#fff", fontWeight: 600, fontSize: "0.95rem" },
     td: { padding: "12px 18px", borderBottom: "1px solid #eee", fontSize: "0.95rem", color: "#1a1a1a" },
-    actionBtn: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "6px 12px", fontSize: "0.85rem", borderRadius: "5px", border: "none", cursor: "pointer", transition: "0.2s" },
-    editBtn: { backgroundColor: "#ffca28", color: "#000" },
-    deleteBtn: { backgroundColor: "#ff4d4f", color: "#fff" },
+    actionBtn: { display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 10px", fontSize: "0.85rem", borderRadius: "6px", border: "none", cursor: "pointer", transition: "0.12s", boxShadow: "none" },
+    editBtn: { backgroundColor: "#ffb740", color: "#000", padding: "6px 10px" },
+    deleteBtn: { backgroundColor: "#ff4d4f", color: "#fff", padding: "6px 10px" },
+    actionGroup: { display: 'flex', gap: 8, alignItems: 'center' },
 
     // Modal
     modalOverlay: {
@@ -151,20 +208,22 @@ export default function UserManagement() {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.header}>User Management</h2>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <div style={styles.searchWrapper}>
-        <FiSearch size={18} color="#0d1b2a" />
-        <input
-          type="text"
-          placeholder="Search by name, username or role..."
-          style={styles.searchInput}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+          <FiSearch size={18} color="#0d1b2a" />
+          <input
+            type="text"
+            placeholder="Search by name, username or role..."
+            style={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer', display:'inline-flex', gap:8, alignItems:'center' }}><FiPlus /> New User</button>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* <button className="add-user-btn" onClick={() => setShowCreateModal(true)} style={{ display: 'inline-flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: '#0d1b2a', color: '#fff', border: 'none', cursor: 'pointer' }}><FiPlus /> Add User</button> */}
+        </div>
       </div>
 
       <div style={styles.tableWrapper}>
@@ -179,25 +238,73 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
-                <td style={styles.td}>{user.full_name}</td>
-                <td style={styles.td}>{user.username}</td>
-                <td style={styles.td}>{user.role}</td>
-                <td style={styles.td}>{user.organisation}</td>
-                <td style={styles.td}>
-                  <button style={{ ...styles.actionBtn, ...styles.editBtn }} onClick={() => handleEditClick(user)}>
-                    <FiEdit /> Edit
-                  </button>
-                  <button style={{ ...styles.actionBtn, ...styles.deleteBtn }} onClick={() => handleDeleteClick(user.id)}>
-                    <FiTrash2 /> Delete
-                  </button>
-                </td>
+            {loadingUsers ? (
+              <tr>
+                <td style={styles.td} colSpan={5}>Loading users…</td>
               </tr>
-            ))}
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td style={styles.td} colSpan={5}>No users found</td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id}>
+                  <td style={styles.td}>{user.full_name}</td>
+                  <td style={styles.td}>{user.username}</td>
+                  <td style={styles.td}>{user.role}</td>
+                  <td style={styles.td}>{getOrganisationName(user) || user.organisation || ''}</td>
+                  <td style={styles.td}>
+                    <div style={styles.actionGroup}>
+                      <button aria-label={`Edit ${user.full_name}`} title="Edit" style={{ ...styles.actionBtn, ...styles.editBtn }} onClick={() => handleEditClick(user)}>
+                        <FiEdit /> <span className="action-label">Edit</span>
+                      </button>
+                      <button aria-label={`View activity for ${user.full_name}`} title="View Activity" style={{ ...styles.actionBtn, padding: '6px 10px', background: '#e8f0ff', color: '#0d1b2a' }} onClick={() => { window.location.href = `/admin-dashboard?userId=${user.id}&user=${encodeURIComponent(user.username || user.full_name)}&page=tracking`; }}>
+                        <FiActivity /> <span className="action-label">Activity</span>
+                      </button>
+                      <button aria-label={`Delete ${user.full_name}`} title="Delete" style={{ ...styles.actionBtn, ...styles.deleteBtn }} onClick={() => handleDeleteClick(user)}>
+                        <FiTrash2 /> <span className="action-label">Delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Toast */}
+      {toast.show && (
+        <div className={`toast ${toast.type === 'error' ? 'toast-error' : 'toast-success'}`} role="status">
+          {toast.message}
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <FiX style={styles.modalClose} onClick={() => setShowCreateModal(false)} />
+            <h3 style={styles.modalHeader}>Add New System User</h3>
+            <CreateForm organisations={organisations} onCreate={handleCreateUser} onCancel={() => setShowCreateModal(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deletingUser && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <FiX style={styles.modalClose} onClick={cancelDelete} />
+            <h3 style={styles.modalHeader}>Confirm Delete</h3>
+            <p>Are you sure you want to delete <strong>{deletingUser.full_name}</strong>?</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={cancelDelete} style={{ padding: '8px 12px', borderRadius: 6 }}>Cancel</button>
+              <button onClick={confirmDelete} style={{ padding: '8px 12px', borderRadius: 6, background: '#ff4d4f', color: '#fff', border: 'none' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {showModal && editUser && (
@@ -234,51 +341,122 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <FiX style={styles.modalClose} onClick={() => setShowCreateModal(false)} />
-            <h3 style={styles.modalHeader}>Create New User</h3>
-            <CreateForm organisations={organisations} onCreate={handleCreateUser} onCancel={() => setShowCreateModal(false)} />
-          </div>
-        </div>
-      )}
+      {/* (Create form is rendered inline above the table) */}
     </div>
   );
 }
 
-function CreateForm({ organisations, onCreate, onCancel }){
-  const [full_name, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role_id, setRoleId] = useState(2);
-  const [organisation_id, setOrganisationId] = useState('');
+function CreateForm({ organisations, onCreate, onCancel }) {
+  const [form, setForm] = useState({
+    full_name: "",
+    username: "",
+    password: "",
+    role_id: "",
+    organisation_id: "",
+    focus_area_id: ""
+  });
 
-  const submit = () => {
-    const payload = { full_name, username, password, role_id: Number(role_id), organisation_id: organisation_id ? Number(organisation_id) : null };
-    onCreate(payload);
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [focusAreas, setFocusAreas] = useState([]);
+  const [localOrgs] = useState(organisations || []);
+
+  const token = localStorage.getItem("token");
+
+  const generatePassword = () => {
+    const pwd = Math.random().toString(36).slice(-8);
+    setForm({ ...form, password: pwd });
+    setGeneratedPassword(pwd);
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    const payload = {
+      full_name: form.full_name,
+      username: form.username,
+      password: form.password,
+      role_id: parseInt(form.role_id),
+      organisation_id: form.organisation_id ? parseInt(form.organisation_id) : null,
+      focus_area_id: form.focus_area_id ? parseInt(form.focus_area_id) : null,
+    };
+
+    if (payload.role_id === 3 && !payload.organisation_id) {
+      setMessage("Organisation and Focus Area are required for OMA role");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setMessage(data?.message || "Error creating user");
+        return;
+      }
+
+      setMessage(`User created! Temporary Password: ${data?.plain_password || ''}`);
+
+      setForm({ full_name: "", username: "", password: "", role_id: "", organisation_id: "", focus_area_id: "" });
+      setGeneratedPassword("");
+      try { onCreate && onCreate(); } catch (e) { }
+    } catch (err) {
+      console.error(err);
+      setMessage("Server error while creating user");
+    }
+  };
+
+  const inputStyle = { width: "100%", padding: 10, marginBottom: 12, borderRadius: 6, border: "1px solid #ccc" };
+  const labelStyle = { fontWeight: 600, marginBottom: 5, display: "block" };
 
   return (
     <div>
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Full name" value={full_name} onChange={e=>setFullName(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} />
-      <input style={{width:'100%',padding:8,marginBottom:10}} placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={role_id} onChange={e=>setRoleId(e.target.value)}>
-        <option value={1}>Admin</option>
-        <option value={2}>NPC</option>
-        <option value={3}>OMA</option>
-        <option value={4}>User</option>
+      <label style={labelStyle}>Full Name</label>
+      <input style={inputStyle} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+
+      <label style={labelStyle}>Username</label>
+      <input style={inputStyle} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+
+      <label style={labelStyle}>Role</label>
+      <select style={inputStyle} value={form.role_id} onChange={(e) => setForm({ ...form, role_id: e.target.value })}>
+        <option value="">Select role</option>
+        <option value="1">Admin</option>
+        <option value="2">NPC</option>
+        <option value="3">OMA</option>
       </select>
-      <select style={{width:'100%',padding:8,marginBottom:10}} value={organisation_id} onChange={e=>setOrganisationId(e.target.value)}>
-        <option value="">-- Organisation (optional) --</option>
-        {organisations.map(o => <option key={o.organisation_id || o.id} value={o.organisation_id || o.id}>{o.name}</option>)}
-      </select>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={onCancel} style={{padding:'8px 12px',borderRadius:8}}>Cancel</button>
-        <button onClick={submit} style={{padding:'8px 12px',borderRadius:8,background:'#0d1b2a',color:'#fff'}}>Create</button>
+
+      {form.role_id === "3" && (
+        <>
+          <label style={labelStyle}>Organisation (OMA)</label>
+          <select style={inputStyle} value={form.organisation_id} onChange={(e) => setForm({ ...form, organisation_id: e.target.value, focus_area_id: "" })}>
+            <option value="">Select organisation</option>
+            {localOrgs.map((o) => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+        </>
+      )}
+
+      <label style={labelStyle}>Password</label>
+      <div style={{ display: "flex", gap: 10 }}>
+        <input style={{ ...inputStyle, marginBottom: 0 }} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <button type="button" onClick={generatePassword} style={{ padding: "10px 12px", background: "var(--brand-navy)", color: "#fff", borderRadius: 6, border: "none" }}>Generate</button>
       </div>
+
+      <div style={{ marginTop: 15, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <button onClick={onCancel}>Cancel</button>
+        <button onClick={handleSubmit} style={{ background: "var(--brand-navy)", color: "#fff", padding: "8px 14px", borderRadius: 6 }}>Create</button>
+      </div>
+      {message && <p style={{ marginTop: 10, color: message.toLowerCase().includes('error') ? 'var(--alert)' : 'var(--success)' }}>{message}</p>}
     </div>
-  )
+  );
 }
