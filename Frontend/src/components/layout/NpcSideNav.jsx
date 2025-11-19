@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   HiOutlineHomeModern,
   HiOutlineSquares2X2,
@@ -7,23 +7,29 @@ import {
   HiOutlineClipboardDocumentCheck,
   HiOutlineChartPie,
 } from "react-icons/hi2";
-import NpcReviewerCard from "../profile/NpcReviewerCard";
-import AtRiskCard from "../common/AtRiskCard";
 
 const navItems = [
-  { label: "Dashboard", icon: HiOutlineHomeModern },
-  { label: "All Programmes", icon: HiOutlineSquares2X2 },
-  { label: "All Reports", icon: HiOutlineClipboardDocumentList },
-  { label: "Analytics", icon: HiOutlineChartPie },
+  { key: "dashboard", label: "Dashboard", icon: HiOutlineHomeModern, to: () => ({}) },
+  { key: "planning", label: "Planning", icon: HiOutlineClipboardDocumentList, to: () => ({ section: "planning" }) },
+  { key: "report", label: "Report", icon: HiOutlineChartPie, to: () => ({ section: "report" }) },
 ];
 
 export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 }) {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const activeLabel = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const section = params.get("section");
+    if (section === "planning") return "Planning";
+    if (section === "report") return "Report";
+    return "Dashboard";
+  }, [location.search]);
 
   const reviewLinks = [
     { label: "Planning", stage: "planning" },
-    { label: "Review", stage: "review" },
+    { label: "Analytic", stage: "analytic" },
     { label: "Closure", stage: "closure" },
   ];
 
@@ -31,21 +37,25 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
     navigate(`/npc-dashboard?stage=${stage}`);
   };
 
+  const analyticsGroups = [
+    { label: "OMA Analytics", key: "oma" },
+    { label: "NPC Analytics", key: "npc" },
+  ];
+
   return (
     <aside className="npc-sidenav">
       <div>
-        <AtRiskCard
-          title="At Risk OMAs"
-          body="One or more OMAs are highly vulnerable or compromised."
-          ctaLabel="VIEW AT RISK OMAs"
-          onClick={() => navigate("/npc-dashboard?filter=at-risk")}
-        />
         <div className="npc-sidenav__list">
-          {navItems.map(({ label, icon: Icon }) => (
+          {navItems.map(({ key, label, icon: Icon, to }) => (
             <button
-              key={label}
-              className={`npc-sidenav__item ${active === label ? "is-active" : ""}`}
+              key={key}
+              className={`npc-sidenav__item ${activeLabel === label ? "is-active" : ""}`}
               type="button"
+              onClick={() => {
+                const params = to ? to() : {};
+                const query = new URLSearchParams(params).toString();
+                navigate(query ? `/npc-dashboard?${query}` : "/npc-dashboard");
+              }}
             >
               <Icon size={20} />
               <span>{label}</span>
@@ -58,13 +68,17 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
               onClick={() => setIsReviewOpen((prev) => !prev)}
             >
               <HiOutlineClipboardDocumentCheck size={20} />
-              <span>Review Queue</span>
+              <span>Analytics</span>
             </button>
             {isReviewOpen && (
               <div className="npc-sidenav__submenu">
-                {reviewLinks.map((link) => (
-                  <button key={link.stage} type="button" onClick={() => handleReviewNavigate(link.stage)}>
-                    {link.label}
+                {analyticsGroups.map((group) => (
+                  <button
+                    key={group.key}
+                    type="button"
+                    onClick={() => navigate(`/npc-dashboard?analyticsGroup=${group.key}`)}
+                  >
+                    {group.label}
                   </button>
                 ))}
               </div>
@@ -72,7 +86,6 @@ export default function NpcSideNav({ active = "Dashboard", pendingApprovals = 0 
           </div>
         </div>
       </div>
-      <NpcReviewerCard />
     </aside>
   );
 }

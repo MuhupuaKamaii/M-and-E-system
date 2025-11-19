@@ -17,6 +17,22 @@ router.get('/focus-areas', async (req, res) => {
     }
 });
 
+// Get focus areas filtered by organisation ID
+router.get('/focus-areas/:organisationId', async (req, res) => {
+    try {
+        const organisationId = parseInt(req.params.organisationId);
+        const { data, error } = await supabase
+            .from('focus_area')
+            .select('*')
+            .eq('organisation_id', organisationId);
+
+        if (error) throw error;
+        res.json({ focusAreas: data });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Get all pillars
 router.get('/pillars', async (req, res) => {
     try {
