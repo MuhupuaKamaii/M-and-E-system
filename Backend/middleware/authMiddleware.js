@@ -35,4 +35,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate }; // Export as named export
+// Export both as named export and default export for compatibility
+module.exports = authenticate;
+module.exports.authenticate = authenticate;
