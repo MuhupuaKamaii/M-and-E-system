@@ -30,13 +30,16 @@
 .landing-section {
   height: 85vh;
   background: var(--primary-blue);
+  background-image: url('/images/hero-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--white);
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 .hero-overlay {
@@ -45,8 +48,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: transparent;
+  background: linear-gradient(135deg, rgba(9, 36, 67, 0.75), rgba(44, 69, 99, 0.65));
   z-index: 1;
+}
+
+/* Parallax effect for hero background */
+@media (min-width: 768px) {
+  .landing-section {
+    background-attachment: fixed;
+  }
 }
 
 .home-header,
@@ -83,6 +93,8 @@
   padding: 0;
   background: var(--primary-blue);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1001;
 }
 
 .header-container {
@@ -141,6 +153,90 @@
   height: 100%;
 }
 
+/* Frameworks Dropdown */
+.frameworks-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.frameworks-btn {
+  color: var(--white);
+  background: transparent;
+  border: none;
+  font-weight: 500;
+  padding: 0 2rem;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.frameworks-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.frameworks-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: var(--white);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  min-width: 180px;
+  max-height: none;
+  overflow: visible;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1002;
+}
+
+.frameworks-dropdown.active .frameworks-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.frameworks-dropdown.active .framework-item {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.framework-item {
+  display: block;
+  padding: 1rem 1.5rem;
+  color: var(--dark-blue) !important;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-gray);
+  white-space: nowrap;
+  line-height: 1.4;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.framework-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.framework-item:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.framework-item:hover {
+  background: var(--light-blue);
+  color: var(--primary-blue);
+}
+
 .home-nav a {
   color: var(--white);
   text-decoration: none;
@@ -168,20 +264,19 @@
 .nav-cta {
   margin-left: 1.5rem !important;
   padding: 0.7rem 1.8rem !important;
-  background: var(--orange) !important;
+  background: var(--primary-gradient) !important;
   color: var(--white) !important;
-  border-radius: 6px !important;
+  border-radius: 25px !important;
   font-weight: 600 !important;
   transition: all 0.3s ease !important;
   height: auto !important;
   border-bottom: none !important;
-  box-shadow: 0 2px 8px rgba(255, 140, 66, 0.3);
+  box-shadow: 0 2px 8px rgba(241, 199, 92, 0.3);
 }
 
 .nav-cta:hover {
-  background: #e67a2e !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 15px rgba(241, 199, 92, 0.4) !important;
 }
 
 .hero-content {
@@ -1021,6 +1116,24 @@ html {
     text-align: center;
     min-width: 80px;
   }
+
+  .frameworks-btn {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+    flex: 1;
+    text-align: center;
+    min-width: 120px;
+    height: auto;
+  }
+
+  .frameworks-menu {
+    position: fixed;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    max-width: 300px;
+  }
   
   .nav-cta {
     flex: 1 !important;
@@ -1030,7 +1143,7 @@ html {
   
   .brief-intro-section,
   .news-highlights-section {
-    min-height: auto;
+    min-height: 400px;
     padding: 3rem 0;
   }
   

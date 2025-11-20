@@ -50,40 +50,40 @@
   flex-shrink: 0;
 }
 
-/* Category Colors */
+/* Category Colors - PMD Aligned */
 .card-category.technology {
-  background: rgba(74, 144, 226, 0.1);
-  color: var(--secondary-blue);
+  background: rgba(44, 90, 160, 0.1);
+  color: #2C5AA0;
 }
 
 .card-category.infrastructure {
   background: rgba(255, 140, 66, 0.1);
-  color: var(--orange);
+  color: #FF8C42;
 }
 
 .card-category.education {
-  background: rgba(46, 160, 67, 0.1);
-  color: #2ea043;
+  background: rgba(9, 36, 67, 0.1);
+  color: #092443;
 }
 
 .card-category.energy {
-  background: rgba(255, 193, 7, 0.1);
-  color: #d4a017;
+  background: rgba(243, 166, 58, 0.1);
+  color: #f3a63a;
 }
 
 .card-category.employment {
-  background: rgba(156, 39, 176, 0.1);
-  color: #9c27b0;
+  background: rgba(74, 144, 226, 0.1);
+  color: #4A90E2;
 }
 
 .card-category.urban-development {
-  background: rgba(96, 125, 139, 0.1);
-  color: #607d8b;
+  background: rgba(44, 69, 99, 0.1);
+  color: #2c4563;
 }
 
 .card-category.development-plan {
-  background: rgba(44, 90, 160, 0.1);
-  color: var(--primary-blue);
+  background: rgba(9, 36, 67, 0.1);
+  color: #092443;
 }
 
 .card-date {
@@ -123,27 +123,27 @@
   font-weight: 600;
 }
 
-/* Status Colors */
+/* Status Colors - PMD Aligned */
 .card-status.in-progress,
 .card-status.active {
   background: rgba(255, 140, 66, 0.1);
-  color: var(--orange);
+  color: #FF8C42;
 }
 
 .card-status.completed {
-  background: rgba(46, 160, 67, 0.1);
-  color: #2ea043;
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
 }
 
 .card-status.planning-phase,
 .card-status.preparation {
   background: rgba(74, 144, 226, 0.1);
-  color: var(--secondary-blue);
+  color: #4A90E2;
 }
 
 .card-status.coming-soon {
-  background: rgba(156, 39, 176, 0.1);
-  color: #9c27b0;
+  background: rgba(9, 36, 67, 0.1);
+  color: #092443;
 }
 
 /* Responsive Design */
