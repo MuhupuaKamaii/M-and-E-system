@@ -1,14 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InfiniteMovingCards from '../components/ui/InfiniteMovingCards';
 import '../Styles/Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [isFrameworksOpen, setIsFrameworksOpen] = useState(false);
 
   const handleGetStarted = () => {
     navigate('/login');
   };
+
+  const toggleFrameworksDropdown = () => {
+    setIsFrameworksOpen(!isFrameworksOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isFrameworksOpen && !event.target.closest('.frameworks-dropdown')) {
+        setIsFrameworksOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isFrameworksOpen]);
 
   // Recent Updates Data
   const recentUpdates = [
@@ -178,16 +197,28 @@ const Home = () => {
               <div className="npc-logo">
                 <span className="logo-text">NPC</span>
               </div>
-              <h1>National Planning Commission</h1>
+              <h1>Monitoring and Evaluation System</h1>
             </div>
             <nav className="home-nav">
+              <div className={`frameworks-dropdown ${isFrameworksOpen ? 'active' : ''}`}>
+                <button className="frameworks-btn" onClick={toggleFrameworksDropdown}>
+                  <span>Frameworks</span>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                <div className="frameworks-menu">
+                  <a href="#vision2030" className="framework-item">Vision 2030</a>
+                  <a href="#ndp6" className="framework-item">NDP6</a>
+                </div>
+              </div>
               <a href="/login" className="nav-cta">Login</a>
             </nav>
           </div>
         </header>
         
         <div className="hero-content">
-          <h2>Building Namibia's Future Through Strategic Planning</h2>
+          <h2>Monitoring and Evaluation System</h2>
           <p className="hero-subtitle">
             Coordinating national development planning and monitoring implementation 
             of government policies and programs for sustainable growth.
@@ -303,10 +334,6 @@ const Home = () => {
               direction="right"
               speed="slow"
             />
-          </div>
-          
-          <div className="view-all-news">
-            <button className="view-all-btn">View All Updates</button>
           </div>
         </div>
       </section>
