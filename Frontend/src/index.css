@@ -4,6 +4,23 @@
   100% { box-shadow: 0 0 0 0 rgba(192, 52, 42, 0); }
 }
 
+/* Sidebar analytics select */
+.npc-sidenav__select {
+  width: 100%;
+  background: #0e2339;
+  color: #e8eef9;
+  border: 2px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+}
+.npc-sidenav__select:focus {
+  outline: none;
+  border-color: #7db1ff;
+  box-shadow: 0 0 0 3px rgba(125,177,255,0.25);
+}
+.npc-sidenav__select option { color: #0e0f13; background: #ffffff; }
+
 .npc-atrisk {
   display: flex;
   align-items: center;
@@ -17,7 +34,8 @@
   position: relative;
 }
 
-.npc-atrisk::after { content: none; }
+/* Remove red pulsing indicator on inline At-risk card (keep FAB pulse intact) */
+.npc-atrisk::after { content: none !important; animation: none !important; }
 
 .npc-atrisk__icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #FCECEE; color: #C0342A; }
 .npc-atrisk__text h3 { margin: 0; font-size: 1rem; line-height: 1.2; color: #C0342A; }
@@ -118,7 +136,7 @@ img {
 
 .npc-dashboard {
   min-height: 100vh;
-  background: var(--surface);
+  background: #f5f7fb;
 }
 
 .npc-dark {
@@ -384,24 +402,17 @@ img {
 
 .npc-dashboard__grid {
   display: grid;
-  grid-template-columns: 230px 1fr;
+  grid-template-columns: 300px 1fr;
   min-height: calc(100vh - 72px);
 }
 
 .npc-sidenav {
-  background: linear-gradient(180deg, #0F2A45 0%, #0A2237 100%); /* Deep navy */
-  padding: 2rem 1rem;
+  background: #092443;
+  color: #ffffff;
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border-right: 1px solid var(--border);
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0;
-  background-color: transparent;
-  color: #fff;
-  margin-bottom: 1.25rem;
+  border-right: 1px solid rgba(255,255,255,0.1);
 }
 
 .npc-approval--compact p {
@@ -428,7 +439,7 @@ img {
 .npc-sidenav__list {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .npc-sidenav__review {
@@ -437,7 +448,7 @@ img {
 }
 
 .npc-sidenav__item--review.is-open {
-  background: #4A90E2;
+  background: rgba(74,144,226,0.18);
   color: #ffffff;
 }
 
@@ -445,41 +456,113 @@ img {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  margin: 0.4rem 0 0 2.2rem;
+  margin: 0.4rem 0 0 0.9rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid rgba(255,255,255,0.15);
 }
 
 .npc-sidenav__submenu button {
+  width: 100%;
   text-align: left;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid var(--border);
-  background: #ffffff;
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.86);
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  position: relative;
+}
+
+.npc-sidenav__submenu button:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+}
+
+.npc-sidenav__submenu button::before {
+  content: '';
+  position: absolute;
+  left: -0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+}
+
+.npc-sidenav__submenu button.is-active {
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+}
+.npc-sidenav__submenu button.is-active::before {
+  width: 8px;
+  height: 18px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #7db1ff, #4A90E2);
 }
 
 .npc-sidenav__item {
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255,255,255,0.7);
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem 0.9rem;
-  border-radius: 8px;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
   font-weight: 600;
   text-align: left;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  background-clip: padding-box;
 }
 
-.npc-sidenav__item:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+.npc-sidenav__item:hover { background: rgba(255,255,255,0.08); color: #ffffff; border-radius: 0 10px 10px 0; }
 
-.npc-sidenav__item.is-active { background: rgba(255,255,255,0.16); color: #ffffff; }
+.npc-sidenav__item.is-active { background: rgba(255,255,255,0.12); color: #ffffff; box-shadow: inset 4px 0 0 #ffffff; border-radius: 0 10px 10px 0; }
+
+.npc-sidenav__item svg { opacity: 0.8; }
+.npc-sidenav__item.is-active svg { opacity: 1; }
+.npc-sidenav__item:hover svg { opacity: 1; }
 
 .npc-dashboard__main {
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
+
+/* Floating At-risk button */
+.npc-risk-fab {
+  position: fixed;
+  top: 88px;
+  right: 24px;
+  z-index: 50;
+  background: #ffffff;
+  color: #1E3D6F;
+  border: 1px solid #cfe3f7;
+  border-radius: 999px;
+  padding: 10px 14px 10px 36px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+}
+.npc-risk-fab::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #C0342A;
+  animation: npc-danger-pulse 2.2s infinite;
+}
+.npc-risk-fab:hover { background: #dff0ff; border-color: #4A90E2; box-shadow: 0 12px 26px rgba(44,90,160,0.18); transform: translateY(-1px); }
 
 .npc-hero {
   background: radial-gradient(1200px 500px at 20% -20%, rgba(44, 177, 163, 0.18), transparent 60%),
@@ -773,6 +856,7 @@ img {
   background: #fff;
   border-radius: 20px;
   border: 1px solid var(--border);
+  box-shadow: 0 8px 20px rgba(14, 53, 93, 0.06);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -815,6 +899,25 @@ img {
   margin: 0;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* Filter card variant for Reports page */
+.npc-filter-card {
+  padding: 1rem 1.25rem;
+  border-radius: 18px;
+  box-shadow: 0 6px 16px rgba(14, 53, 93, 0.05);
+}
+
+/* Small value tags used in indicator rows */
+.npc-tag {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-weight: 700;
+  min-width: 56px;
+  text-align: center;
 }
 
 .npc-progress-grid {
@@ -951,6 +1054,15 @@ img {
   color: #ffffff;
   border-color: #4A90E2;
 }
+
+/* Action variants */
+.npc-link-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.npc-btn-approve { background: #e6f7f2; border-color: #bdebdc; color: #0e5f53; }
+.npc-btn-approve:hover { background: #2CB1A3; border-color: #2CB1A3; color: #fff; }
+
+.npc-btn-reject { background: #fdeeee; border-color: #f3c3bf; color: #7a1f19; }
+.npc-btn-reject:hover { background: #C0342A; border-color: #C0342A; color: #fff; }
 
 /* Ensure chip row can wrap nicely on smaller screens */
 .npc-chip-group { flex-wrap: wrap; }
